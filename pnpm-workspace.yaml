@@ -1,0 +1,7 @@
+packages:
+  - khidmatai_nextjs
+  - khidmatai_server
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

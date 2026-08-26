@@ -1,0 +1,14 @@
+{
+  "name": "khidmatai-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter khidmatai-server --filter khidmatai_nextjs dev",
+    "lint": "pnpm --recursive --if-present lint",
+    "typecheck": "pnpm --recursive --if-present typecheck",
+    "test": "pnpm --recursive --if-present test",
+    "build": "pnpm --recursive build",
+    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "packageManager": "pnpm@10.27.0"
+}
