@@ -4,10 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel --filter khidmatai-server --filter khidmatai_nextjs dev",
+    "dev:server": "pnpm --filter khidmatai-server dev",
     "lint": "pnpm --recursive --if-present lint",
     "typecheck": "pnpm --recursive --if-present typecheck",
     "test": "pnpm --recursive --if-present test",
     "build": "pnpm --recursive build",
+    "build:server": "pnpm --filter khidmatai-server build",
+    "start": "pnpm --filter khidmatai-server start",
     "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "packageManager": "pnpm@10.27.0"
