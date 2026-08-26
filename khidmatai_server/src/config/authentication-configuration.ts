@@ -32,6 +32,7 @@ export const authenticationConfiguration = betterAuth({
       const assignedAccountRole = createdAuthenticationUser.accountType === "provider" ? "provider" : "customer";
       await postgresqlConnectionPool.query('update "user" set role = $1 where id = $2', [assignedAccountRole, createdAuthenticationUser.id]);
       if (assignedAccountRole === "provider") await postgresqlConnectionPool.query("insert into provider_profiles (user_id, status) values ($1, 'draft') on conflict (user_id) do nothing", [createdAuthenticationUser.id]);
+      if (assignedAccountRole === "customer") await postgresqlConnectionPool.query("insert into customer_profiles (user_id) values ($1) on conflict (user_id) do nothing", [createdAuthenticationUser.id]);
     },
   } } },
   session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },

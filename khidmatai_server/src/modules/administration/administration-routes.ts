@@ -7,5 +7,5 @@ import { applyProviderOnboardingReviewActionController, listProviderOnboardingPr
 
 export const administrationRoutes = Router();
 administrationRoutes.use(createAsyncRequestHandler(requireAuthenticatedSessionMiddleware));
-administrationRoutes.get("/provider-onboarding-profiles", requireAccountRoleMiddleware("admin", "support"), createAsyncRequestHandler(listProviderOnboardingProfilesController));
-administrationRoutes.post("/provider-onboarding-profiles/review-actions", requireTrustedRequestOriginMiddleware, requireAccountRoleMiddleware("admin"), createAsyncRequestHandler(applyProviderOnboardingReviewActionController));
+administrationRoutes.get("/provider-profiles", requireAccountRoleMiddleware("admin", "support"), createAsyncRequestHandler(listProviderOnboardingProfilesController));
+administrationRoutes.post("/provider-profiles/:providerProfileId/review-actions", requireTrustedRequestOriginMiddleware, requireAccountRoleMiddleware("admin"), createAsyncRequestHandler(applyProviderOnboardingReviewActionController));

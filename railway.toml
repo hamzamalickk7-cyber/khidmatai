@@ -4,5 +4,5 @@ buildCommand = "pnpm build:server"
 
 [deploy]
 startCommand = "pnpm start"
-healthcheckPath = "/api/health/ready"
+healthcheckPath = "/api/v1/health/ready"
 healthcheckTimeout = 120

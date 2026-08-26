@@ -10,6 +10,7 @@ export const providerProfiles = pgTable("provider_profiles", {
   governmentIdentityNumber: text("government_identity_number"),
   addressLine: text("address_line"),
   city: text("city"),
+  professionalTitle: text("professional_title"),
   yearsOfExperience: integer("years_of_experience"),
   professionalBio: text("professional_bio"),
   availabilitySummary: text("availability_summary"),
@@ -21,6 +22,9 @@ export const providerProfiles = pgTable("provider_profiles", {
 }, (providerProfile) => [
   index("provider_profiles_status_index").on(providerProfile.status),
   check("provider_profiles_version_check", sql`${providerProfile.version} > 0`),
+  check("provider_profiles_status_check", sql`${providerProfile.status} in ('draft', 'submitted', 'under_review', 'changes_required', 'active', 'suspended', 'rejected', 'removed')`),
+  check("provider_profiles_years_of_experience_check", sql`${providerProfile.yearsOfExperience} is null or ${providerProfile.yearsOfExperience} between 0 and 80`),
+  check("provider_profiles_professional_title_length_check", sql`${providerProfile.professionalTitle} is null or char_length(${providerProfile.professionalTitle}) between 2 and 120`),
 ]);
 
 export const providerServiceCategories = pgTable("provider_service_categories", {

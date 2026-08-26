@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { khidmatAiDatabase } from "../../database/database-connection.js";
+import { authenticationUsers } from "../../database/schema/authentication-schema.js";
 import { auditEvents, providerProfiles, providerReferences, providerReviewDecisions, providerServiceAreas, providerServiceCategories } from "../../database/schema/provider-onboarding-schema.js";
 import type { ProviderOnboardingUpdateInput } from "./provider-onboarding-types.js";
 
@@ -22,6 +23,7 @@ export async function updateProviderOnboardingDraft(authenticationUserId: string
       phoneNumber: providerOnboardingUpdate.phoneNumber,
       addressLine: providerOnboardingUpdate.addressLine,
       city: providerOnboardingUpdate.city,
+      professionalTitle: providerOnboardingUpdate.professionalTitle,
       yearsOfExperience: providerOnboardingUpdate.yearsOfExperience,
       professionalBio: providerOnboardingUpdate.professionalBio,
       availabilitySummary: providerOnboardingUpdate.availabilitySummary,
@@ -31,6 +33,8 @@ export async function updateProviderOnboardingDraft(authenticationUserId: string
     }).where(and(eq(providerProfiles.userId, authenticationUserId), eq(providerProfiles.version, providerOnboardingUpdate.expectedVersion), inArray(providerProfiles.status, ["draft", "changes_required"]))).returning({ id: providerProfiles.id, version: providerProfiles.version, status: providerProfiles.status });
 
     if (!updatedProviderProfile) return null;
+
+    await databaseTransaction.update(authenticationUsers).set({ name: providerOnboardingUpdate.fullName, updatedAt: new Date() }).where(eq(authenticationUsers.id, authenticationUserId));
 
     await Promise.all([
       databaseTransaction.delete(providerServiceCategories).where(eq(providerServiceCategories.providerProfileId, updatedProviderProfile.id)),

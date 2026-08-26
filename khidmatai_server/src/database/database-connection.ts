@@ -4,6 +4,7 @@ import { backendEnvironmentConfiguration } from "../config/environment-configura
 import { applicationLogger } from "../config/logger-configuration.js";
 import * as authenticationDatabaseSchema from "./schema/authentication-schema.js";
 import * as providerOnboardingDatabaseSchema from "./schema/provider-onboarding-schema.js";
+import * as customerProfileDatabaseSchema from "./schema/customer-profile-schema.js";
 
 export const postgresqlConnectionPool = new Pool({
   connectionString: backendEnvironmentConfiguration.DATABASE_URL,
@@ -20,5 +21,5 @@ postgresqlConnectionPool.on("error", (idleClientError) => {
 });
 
 export const khidmatAiDatabase = drizzle(postgresqlConnectionPool, {
-  schema: { ...authenticationDatabaseSchema, ...providerOnboardingDatabaseSchema },
+  schema: { ...authenticationDatabaseSchema, ...customerProfileDatabaseSchema, ...providerOnboardingDatabaseSchema },
 });

@@ -9,9 +9,11 @@ export interface ProviderReferenceInput {
 }
 
 export interface ProviderOnboardingUpdateInput {
+  fullName: string;
   phoneNumber: string;
   addressLine: string;
   city: string;
+  professionalTitle: string;
   yearsOfExperience: number;
   professionalBio: string;
   availabilitySummary: string;

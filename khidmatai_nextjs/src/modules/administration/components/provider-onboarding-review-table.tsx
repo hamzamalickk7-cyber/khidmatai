@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { submitProviderOnboardingReviewAction } from "@/modules/administration/services/administration-api-service";
@@ -103,21 +104,16 @@ export function ProviderOnboardingReviewTable({ providerOnboardingProfiles, isRe
         {providerOnboardingProfiles.length === 0 && <p className="p-8 text-center text-ink/50">No providers found.</p>}
       </div>
 
-      {pendingProviderReviewAction && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/45 p-4" role="presentation">
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="provider-review-dialog-title"
-            aria-describedby="provider-review-dialog-description"
-            className="w-full max-w-lg rounded-2xl border border-ink/10 bg-white p-6 shadow-2xl"
-          >
-            <h2 id="provider-review-dialog-title" className="text-xl font-semibold">
+      <Dialog open={Boolean(pendingProviderReviewAction)} onOpenChange={(open) => { if (!open && !isSubmittingReviewAction) setPendingProviderReviewAction(null); }}>
+        {pendingProviderReviewAction && <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
               {pendingProviderReviewAction.actionDefinition.label} {pendingProviderReviewAction.providerProfile.name}?
-            </h2>
-            <p id="provider-review-dialog-description" className="mt-2 text-sm leading-6 text-ink/55">
+            </DialogTitle>
+            <DialogDescription>
               This creates a permanent review decision and audit record. It cannot be undone from this screen.
-            </p>
+            </DialogDescription>
+          </DialogHeader>
 
           <Field className="mt-5" data-invalid={Boolean(reviewReasonError)}>
             <FieldLabel htmlFor="provider-review-reason">Reason</FieldLabel>
@@ -133,16 +129,15 @@ export function ProviderOnboardingReviewTable({ providerOnboardingProfiles, isRe
             {reviewReasonError && <FieldError id="provider-review-reason-error">{reviewReasonError}</FieldError>}
           </Field>
 
-          <div className="mt-6 flex justify-end gap-3">
+          <DialogFooter>
             <Button type="button" variant="outline" disabled={isSubmittingReviewAction} onClick={() => setPendingProviderReviewAction(null)}>Cancel</Button>
             <Button type="button" onClick={confirmPendingProviderReviewAction} disabled={isSubmittingReviewAction}>
               {isSubmittingReviewAction && <Loader2Icon className="size-4 animate-spin" />}
               Confirm
             </Button>
-          </div>
-          </div>
-        </div>
-      )}
+          </DialogFooter>
+        </DialogContent>}
+      </Dialog>
     </>
   );
 }

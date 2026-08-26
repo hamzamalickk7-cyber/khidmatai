@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ApplicationProviders } from "@/application/application-providers";
 
 const bodyTextFont = Plus_Jakarta_Sans({
   variable: "--font-body-text",
@@ -28,8 +29,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     >
       <body className="flex min-h-full flex-col bg-white text-ink">
         <NextTopLoader color="#4f46e5" height={3} showSpinner={false} shadow="0 0 12px rgba(79, 70, 229, 0.45)" />
-        {children}
-        <Toaster />
+        <ApplicationProviders>
+          {children}
+          <Toaster />
+        </ApplicationProviders>
       </body>
     </html>
   );

@@ -4,10 +4,11 @@ import { requestKhidmatAiBackendApi, requestKhidmatAiBackendApiWithMeta } from "
 
 export function getProviderOnboardingProfilesForAdministration(forwardedCookieHeader: string, page: number, pageSize: number) {
   return requestKhidmatAiBackendApiWithMeta<ProviderAdministrationListItem[]>(
-    `${apiEndpointPaths.administrationProviderOnboardingProfiles}?page=${page}&pageSize=${pageSize}`,
+    `${apiEndpointPaths.administrationProviderProfiles}?page=${page}&pageSize=${pageSize}`,
     { headers: { cookie: forwardedCookieHeader } },
   );
 }
 export function submitProviderOnboardingReviewAction(providerReviewAction: ProviderReviewActionInput) {
-  return requestKhidmatAiBackendApi<{ version: number }>(apiEndpointPaths.administrationProviderReviewActions, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(providerReviewAction) });
+  const { providerProfileId, ...providerReviewActionRequestBody } = providerReviewAction;
+  return requestKhidmatAiBackendApi<{ version: number }>(apiEndpointPaths.administrationProviderReviewActions(providerProfileId), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(providerReviewActionRequestBody) });
 }

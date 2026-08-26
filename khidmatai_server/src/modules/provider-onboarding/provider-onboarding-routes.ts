@@ -9,4 +9,4 @@ export const providerOnboardingRoutes = Router();
 providerOnboardingRoutes.use(createAsyncRequestHandler(requireAuthenticatedSessionMiddleware), requireAccountRoleMiddleware("provider"));
 providerOnboardingRoutes.get("/", createAsyncRequestHandler(getProviderOnboardingController));
 providerOnboardingRoutes.put("/", requireTrustedRequestOriginMiddleware, createAsyncRequestHandler(updateProviderOnboardingController));
-providerOnboardingRoutes.post("/submit", requireTrustedRequestOriginMiddleware, createAsyncRequestHandler(submitProviderOnboardingController));
+providerOnboardingRoutes.post("/submissions", requireTrustedRequestOriginMiddleware, createAsyncRequestHandler(submitProviderOnboardingController));

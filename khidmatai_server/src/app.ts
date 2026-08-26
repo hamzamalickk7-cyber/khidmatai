@@ -10,6 +10,7 @@ import { preventPrivateApiCachingMiddleware } from "./middleware/prevent-private
 import { requestContextMiddleware } from "./middleware/request-context-middleware.js";
 import { administrationRoutes } from "./modules/administration/administration-routes.js";
 import { authenticationHttpHandler } from "./modules/authentication/authentication-http-handler.js";
+import { customerProfileRoutes } from "./modules/customer-profile/customer-profile-routes.js";
 import { healthRoutes } from "./modules/health/health-routes.js";
 import { providerOnboardingRoutes } from "./modules/provider-onboarding/provider-onboarding-routes.js";
 import { sendSuccessfulApiResponse } from "./shared/api-response.js";
@@ -42,9 +43,10 @@ export function createKhidmatAiExpressApplication() {
   expressApplication.all("/api/auth/*splat", authenticationHttpHandler);
   expressApplication.use(express.json({ limit: "1mb" }));
   expressApplication.use("/api", preventPrivateApiCachingMiddleware);
-  expressApplication.use("/api/health", healthRoutes);
-  expressApplication.use("/api/provider/onboarding", providerOnboardingRoutes);
-  expressApplication.use("/api/administration", administrationRoutes);
+  expressApplication.use("/api/v1/health", healthRoutes);
+  expressApplication.use("/api/v1/customer-profile", customerProfileRoutes);
+  expressApplication.use("/api/v1/provider-profile", providerOnboardingRoutes);
+  expressApplication.use("/api/v1/administration", administrationRoutes);
   expressApplication.use(notFoundHandlerMiddleware);
   expressApplication.use(errorHandlerMiddleware);
   return expressApplication;
