@@ -1,6 +1,6 @@
 [build]
 builder = "railpack"
-buildCommand = "pnpm build"
+buildCommand = "pnpm build:server"
 
 [deploy]
 startCommand = "pnpm start"
