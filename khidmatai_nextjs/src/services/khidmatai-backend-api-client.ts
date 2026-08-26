@@ -9,7 +9,13 @@ export class KhidmatAiBackendApiError extends Error {
   constructor(public readonly statusCode: number, public readonly errorCode: string, message: string, public readonly details?: unknown) { super(message); }
 }
 
-export function createBackendApiUrl(apiPath: string) { return `${frontendEnvironmentConfiguration.backendApiUrl}${apiPath}`; }
+export function createBackendApiUrl(apiPath: string) {
+  if (typeof window !== "undefined") {
+    return apiPath.replace(/^\/api(?=\/|$)/, "/backend-api");
+  }
+
+  return `${frontendEnvironmentConfiguration.backendApiUrl}${apiPath}`;
+}
 
 async function requestKhidmatAiBackendApiEnvelope<ResponseData>(apiPath: string, requestConfiguration: RequestInit = {}): Promise<SuccessfulApiResponse<ResponseData>> {
   const apiResponse = await fetch(createBackendApiUrl(apiPath), { ...requestConfiguration, credentials: "include", cache: "no-store" });

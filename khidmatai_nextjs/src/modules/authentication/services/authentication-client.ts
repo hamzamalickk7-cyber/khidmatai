@@ -3,11 +3,11 @@
 import { createAuthClient } from "better-auth/react";
 import { adminClient, inferAdditionalFields } from "better-auth/client/plugins";
 import { apiEndpointPaths } from "@/api/api-endpoint-paths";
-import { frontendEnvironmentConfiguration } from "@/api/frontend-environment-configuration";
 
 export const authenticationClient = createAuthClient({
-  baseURL: frontendEnvironmentConfiguration.backendApiUrl,
-  basePath: apiEndpointPaths.authenticationBase,
+  // Authentication stays on Express. The same-origin Next.js rewrite proxies
+  // this browser path to Railway so the session is a first-party Vercel cookie.
+  basePath: apiEndpointPaths.authenticationBase.replace("/api", "/backend-api"),
   fetchOptions: { credentials: "include" },
   plugins: [inferAdditionalFields({ user: {
     accountType: { type: "string", required: true, input: true },
