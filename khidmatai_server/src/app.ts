@@ -12,7 +12,11 @@ import { administrationRoutes } from "./modules/administration/administration-ro
 import { authenticationHttpHandler } from "./modules/authentication/authentication-http-handler.js";
 import { customerProfileRoutes } from "./modules/customer-profile/customer-profile-routes.js";
 import { healthRoutes } from "./modules/health/health-routes.js";
+import { marketplaceCatalogueRoutes } from "./modules/marketplace-catalogue/marketplace-catalogue-routes.js";
 import { providerOnboardingRoutes } from "./modules/provider-onboarding/provider-onboarding-routes.js";
+import { profileIdentityRoutes } from "./modules/profile-identity/profile-identity-routes.js";
+import { profileMediaRoutes } from "./modules/profile-media/profile-media-routes.js";
+import { customerProfileMediaRoutes } from "./modules/profile-media/customer-profile-media-routes.js";
 import { sendSuccessfulApiResponse } from "./shared/api-response.js";
 
 export function createKhidmatAiExpressApplication() {
@@ -36,16 +40,19 @@ export function createKhidmatAiExpressApplication() {
     referrerPolicy: { policy: "no-referrer" },
   }));
   expressApplication.use(cors(applicationCorsConfiguration));
-  expressApplication.use("/api", generalApiRateLimitMiddleware);
-
   expressApplication.get("/", (_request, response) => sendSuccessfulApiResponse(response, { service: "khidmatai-server", message: "KhidmatAI backend server is running." }));
+  expressApplication.use("/api/v1/health", healthRoutes);
+  expressApplication.use("/api", generalApiRateLimitMiddleware);
 
   expressApplication.all("/api/auth/*splat", authenticationHttpHandler);
   expressApplication.use(express.json({ limit: "1mb" }));
   expressApplication.use("/api", preventPrivateApiCachingMiddleware);
-  expressApplication.use("/api/v1/health", healthRoutes);
+  expressApplication.use("/api/v1/public", marketplaceCatalogueRoutes);
   expressApplication.use("/api/v1/customer-profile", customerProfileRoutes);
   expressApplication.use("/api/v1/provider-profile", providerOnboardingRoutes);
+  expressApplication.use("/api/v1/profile", profileIdentityRoutes);
+  expressApplication.use("/api/v1/provider-profile/media", profileMediaRoutes);
+  expressApplication.use("/api/v1/customer-profile/media", customerProfileMediaRoutes);
   expressApplication.use("/api/v1/administration", administrationRoutes);
   expressApplication.use(notFoundHandlerMiddleware);
   expressApplication.use(errorHandlerMiddleware);

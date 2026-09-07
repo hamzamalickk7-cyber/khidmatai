@@ -1,13 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { Controller, useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Lock, LockKeyhole, Mail, Search, UserRound, Wrench } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Lock,
+  LockKeyhole,
+  Mail,
+  Search,
+  ShieldCheck,
+  UserRound,
+  Wrench,
+} from "lucide-react";
 import { ApplicationLoadingOverlay } from "@/components/feedback/application-loading-overlay";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
@@ -16,7 +30,10 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Spinner } from "@/components/ui/spinner";
 import { authenticationClient } from "@/modules/authentication/services/authentication-client";
 import type { PublicAccountRole } from "@/modules/authentication/types/authentication-role";
-import { type AuthenticationFormValues, validateAuthenticationFormValues } from "@/modules/authentication/validations/authentication-form-validation-schema";
+import {
+  type AuthenticationFormValues,
+  validateAuthenticationFormValues,
+} from "@/modules/authentication/validations/authentication-form-validation-schema";
 
 type AuthenticationFormMode = "sign-in" | "sign-up";
 
@@ -54,12 +71,13 @@ const accountRoleOptionList = [
 function resolveSafeRedirectPath(candidatePath: string | null): string | null {
   if (!candidatePath) return null;
   if (!candidatePath.startsWith("/") || candidatePath.startsWith("//")) return null;
+  if (["/login", "/register", "/admin/login"].includes(candidatePath.split(/[?#]/, 1)[0])) return null;
   return candidatePath;
 }
 
 function resolveDefaultDestinationForRole(accountRole: string | null | undefined): string {
-  if (accountRole === "provider") return "/bookings";
-  if (accountRole === "admin" || accountRole === "support") return "/administration";
+  if (accountRole === "provider") return "/dashboard";
+  if (accountRole === "admin" || accountRole === "support") return "/admin";
   return "/explore";
 }
 
@@ -86,29 +104,28 @@ export function AuthenticationFormView({ mode }: { mode: AuthenticationFormMode 
     const explicitRedirectPath = resolveSafeRedirectPath(searchParameters.get("redirect"));
 
     try {
-      let postAuthenticationDestination: string;
-
       if (mode === "sign-up") {
         const registrationResult = await authenticationClient.signUp.email({
           name: authenticationFormValues.name.trim(),
           email: authenticationFormValues.email.trim(),
           password: authenticationFormValues.password,
           accountType: authenticationFormValues.accountType as PublicAccountRole,
+          callbackURL: `${window.location.origin}/dashboard`,
         });
         if (registrationResult.error) throw new Error(registrationResult.error.message);
-        toast.success("Account created");
-        // New accounts land on profile completion, not a role-specific page,
-        // unless the visitor arrived here trying to reach something specific.
-        postAuthenticationDestination = explicitRedirectPath ?? "/profile";
-      } else {
-        const loginResult = await authenticationClient.signIn.email({
-          email: authenticationFormValues.email.trim(),
-          password: authenticationFormValues.password,
-        });
-        if (loginResult.error) throw new Error(loginResult.error.message);
-        toast.success("Welcome back");
-        postAuthenticationDestination = explicitRedirectPath ?? resolveDefaultDestinationForRole(loginResult.data?.user.role);
+        setIsRedirectingAfterAuthentication(true);
+        window.location.replace("/dashboard");
+        return;
       }
+
+      const loginResult = await authenticationClient.signIn.email({
+        email: authenticationFormValues.email.trim(),
+        password: authenticationFormValues.password,
+      });
+      if (loginResult.error) throw new Error(loginResult.error.message);
+      toast.success("Welcome back");
+      const postAuthenticationDestination =
+        explicitRedirectPath ?? resolveDefaultDestinationForRole(loginResult.data?.user.role);
 
       // Left true on purpose: this component unmounts once the destination
       // page finishes loading, so there is nothing to reset it back for.
@@ -116,13 +133,14 @@ export function AuthenticationFormView({ mode }: { mode: AuthenticationFormMode 
       applicationRouter.push(postAuthenticationDestination);
       applicationRouter.refresh();
     } catch (authenticationError) {
-      const authenticationErrorMessage = authenticationError instanceof Error ? authenticationError.message : "Unable to complete the request.";
+      const authenticationErrorMessage =
+        authenticationError instanceof Error ? authenticationError.message : "Unable to complete the request.";
       toast.error("Request failed", { description: authenticationErrorMessage });
     }
   }
 
   return (
-    <main className="flex flex-1 items-center bg-brand-soft/35 px-5 py-12 sm:px-8">
+    <main className="bg-background flex flex-1 items-center px-4 py-6 sm:px-8 sm:py-10">
       <AnimatePresence>
         {isRedirectingAfterAuthentication && (
           <ApplicationLoadingOverlay
@@ -136,28 +154,36 @@ export function AuthenticationFormView({ mode }: { mode: AuthenticationFormMode 
         initial={{ opacity: 0, y: 18, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-ink/8 bg-white shadow-[0_30px_80px_-45px_rgba(11,15,29,.4)] lg:grid-cols-[.85fr_1.15fr]"
+        className="border-border mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border bg-white shadow-[0_30px_80px_-48px_rgba(28,33,29,.38)] lg:grid-cols-[1fr_1fr]"
       >
-        <AuthenticationValuePanel />
+        <AuthenticationValuePanel mode={mode} />
 
-        <div className="p-7 sm:p-12">
+        <div className="p-6 sm:p-10 lg:p-12">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-[-0.02em] text-ink lg:hidden">
-              <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand to-brand-deep text-xs font-bold text-white">Kh</span>
+            <Link
+              href="/"
+              className="text-ink flex items-center gap-2 text-sm font-semibold tracking-[-0.02em] lg:hidden"
+            >
+              <span className="from-brand to-brand-deep grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-xs font-bold text-white">
+                Kh
+              </span>
               Khidmat<span className="text-brand">AI</span>
             </Link>
-            <Link href="/" className={buttonVariants({ variant: "outline", size: "sm", className: "ml-auto gap-1.5 rounded-full" })}>
+            <Link
+              href="/"
+              className={buttonVariants({ variant: "outline", size: "sm", className: "ml-auto gap-1.5 rounded-full" })}
+            >
               <ArrowLeft className="size-4" />
               Home
             </Link>
           </div>
 
-          <div className="mt-8">
-            <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand">
+          <div className="mt-7">
+            <span className="bg-brand-soft text-brand grid size-10 place-items-center rounded-xl">
               <LockKeyhole className="size-5" />
             </span>
-            <h1 className="mt-6 text-3xl">{authenticationPageTitle}</h1>
-            <p className="mt-2 text-sm text-ink/55">
+            <h1 className="mt-5 text-3xl tracking-[-0.035em]">{authenticationPageTitle}</h1>
+            <p className="text-ink/55 mt-2 text-sm">
               {mode === "sign-up" ? "Register as a customer or service provider." : "Secure access to KhidmatAI."}
             </p>
           </div>
@@ -223,19 +249,27 @@ export function AuthenticationFormView({ mode }: { mode: AuthenticationFormMode 
                               value={accountRoleOption.value}
                               aria-label={accountRoleOption.title}
                               className={`relative h-auto w-full flex-col items-start gap-0 rounded-2xl border-2 p-4 text-left whitespace-normal ${
-                                isSelected ? "border-brand bg-brand-soft" : "border-ink/10 bg-transparent hover:bg-ink/[.03]"
+                                isSelected
+                                  ? "border-brand bg-brand-soft"
+                                  : "border-ink/10 hover:bg-ink/[.03] bg-transparent"
                               }`}
                             >
                               {isSelected && (
-                                <span className="absolute right-3 top-3 grid size-5 place-items-center rounded-full bg-brand text-white">
+                                <span className="bg-brand absolute top-3 right-3 grid size-5 place-items-center rounded-full text-white">
                                   <Check className="size-3" strokeWidth={3} />
                                 </span>
                               )}
-                              <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${isSelected ? "bg-brand text-white" : "bg-ink/5 text-ink/60"}`}>
+                              <span
+                                className={`grid size-9 shrink-0 place-items-center rounded-xl ${isSelected ? "bg-brand text-white" : "bg-ink/5 text-ink/60"}`}
+                              >
                                 <accountRoleOption.IconComponent className="size-4" />
                               </span>
-                              <span className="mt-2.5 block text-sm font-semibold text-ink">{accountRoleOption.title}</span>
-                              <span className="mt-0.5 block text-xs leading-5 font-normal text-ink/55">{accountRoleOption.description}</span>
+                              <span className="text-ink mt-2.5 block text-sm font-semibold">
+                                {accountRoleOption.title}
+                              </span>
+                              <span className="text-ink/55 mt-0.5 block text-xs leading-5 font-normal">
+                                {accountRoleOption.description}
+                              </span>
                             </ToggleGroupItem>
                           );
                         })}
@@ -246,7 +280,11 @@ export function AuthenticationFormView({ mode }: { mode: AuthenticationFormMode 
                 </FieldSet>
               )}
 
-              <Button type="submit" disabled={isSubmitting} className="h-12 w-full rounded-2xl text-sm font-semibold">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-brand hover:bg-brand-deep h-11 w-full rounded-xl text-sm font-semibold"
+              >
                 {isSubmitting ? <Spinner /> : <ArrowRight className="size-4" />}
                 {mode === "sign-in" ? authenticationPageCopy.submitSignIn : authenticationPageCopy.submitSignUp}
               </Button>
@@ -260,24 +298,65 @@ export function AuthenticationFormView({ mode }: { mode: AuthenticationFormMode 
   );
 }
 
-function AuthenticationValuePanel() {
+function AuthenticationValuePanel({ mode }: { mode: AuthenticationFormMode }) {
+  const isRegistration = mode === "sign-up";
   return (
-    <div className="hidden bg-ink p-10 text-white lg:flex lg:flex-col lg:justify-between">
-      <div>
-        <span className="grid size-11 place-items-center rounded-2xl bg-brand font-bold">Kh</span>
-        <h2 className="mt-10 text-4xl">Trusted local work starts with a trusted account.</h2>
-        <p className="mt-5 leading-7 text-white/60">
-          Secure access for customers and providers, with protected operational workspaces for platform staff.
-        </p>
+    <div className="relative hidden min-h-[690px] overflow-hidden lg:block">
+      <Image
+        src={
+          isRegistration
+            ? "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1200&q=88"
+            : "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=88"
+        }
+        alt={
+          isRegistration
+            ? "A skilled electrician completing professional service work"
+            : "A comfortable home interior maintained by trusted local professionals"
+        }
+        fill
+        sizes="50vw"
+        className="object-cover"
+      />
+      <div className="from-ink-soft/95 via-ink-soft/45 absolute inset-0 bg-gradient-to-t to-transparent" />
+      <div className="absolute inset-0 flex flex-col justify-between p-10 text-white xl:p-12">
+        <Link href="/" className="flex w-fit items-center gap-2.5 text-lg font-bold tracking-[-0.035em]">
+          <span className="text-brand-deep grid size-9 place-items-center rounded-xl bg-white text-xs font-bold">
+            Kh
+          </span>
+          Khidmat<span className="text-[#a8d5a2]">AI</span>
+        </Link>
+
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/15 px-3 py-1.5 text-xs font-semibold text-white/80 backdrop-blur">
+            <ShieldCheck className="size-3.5" />{" "}
+            {isRegistration ? "Build trust through real work" : "Welcome back to KhidmatAI"}
+          </span>
+          <h2 className="mt-5 max-w-md text-3xl leading-tight tracking-[-0.035em]">
+            {isRegistration
+              ? "Join a marketplace designed for customers and skilled professionals."
+              : "Your bookings, providers, and account details are ready when you are."}
+          </h2>
+          <p className="mt-4 max-w-md text-sm leading-6 text-white/65">
+            {isRegistration
+              ? "Choose how you will use KhidmatAI today. Your workspace automatically adapts to your role."
+              : "Sign in securely to continue managing your local service activity."}
+          </p>
+          <ul className="mt-7 grid gap-3 text-sm text-white/75">
+            {[
+              "Private and secure account access",
+              "Role-specific customer and provider tools",
+              "Provider review before public visibility",
+            ].map((valueStatement) => (
+              <li key={valueStatement} className="flex items-center gap-2.5">
+                <span className="bg-accent-warm grid size-5 place-items-center rounded-full">
+                  <Check className="size-3" strokeWidth={3} />
+                </span>
+                {valueStatement}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-      <ul className="space-y-3 text-sm text-white/60">
-        {["One quick sign-up to get started", "Your account stays private and secure", "Provider approval before marketplace access"].map((valueStatement) => (
-          <li key={valueStatement} className="flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-brand" />
-            {valueStatement}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -285,8 +364,10 @@ function AuthenticationValuePanel() {
 function AuthenticationAlternativeLink({ mode }: { mode: AuthenticationFormMode }) {
   const isSignIn = mode === "sign-in";
   return (
-    <div className="mt-8 flex flex-col items-center gap-3 border-t border-ink/8 pt-6 text-center sm:flex-row sm:justify-center">
-      <p className="text-sm text-ink/60">{isSignIn ? authenticationPageCopy.noAccount : authenticationPageCopy.hasAccount}</p>
+    <div className="border-ink/8 mt-8 flex flex-col items-center gap-3 border-t pt-6 text-center sm:flex-row sm:justify-center">
+      <p className="text-ink/60 text-sm">
+        {isSignIn ? authenticationPageCopy.noAccount : authenticationPageCopy.hasAccount}
+      </p>
       <Link
         href={isSignIn ? "/register" : "/login"}
         className={buttonVariants({ variant: "outline", size: "sm", className: "gap-1.5 rounded-full" })}
@@ -307,7 +388,14 @@ interface AuthenticationTextFieldProps {
   errorMessage?: string;
 }
 
-function AuthenticationTextField({ label, icon, type = "text", autoComplete = "", registration, errorMessage }: AuthenticationTextFieldProps) {
+function AuthenticationTextField({
+  label,
+  icon,
+  type = "text",
+  autoComplete = "",
+  registration,
+  errorMessage,
+}: AuthenticationTextFieldProps) {
   const fieldErrorId = `${registration.name}-error`;
   return (
     <Field data-invalid={Boolean(errorMessage)}>
@@ -337,13 +425,22 @@ interface AuthenticationPasswordFieldProps {
   errorMessage?: string;
 }
 
-function AuthenticationPasswordField({ label, isPasswordVisible, onToggleVisibility, autoComplete, registration, errorMessage }: AuthenticationPasswordFieldProps) {
+function AuthenticationPasswordField({
+  label,
+  isPasswordVisible,
+  onToggleVisibility,
+  autoComplete,
+  registration,
+  errorMessage,
+}: AuthenticationPasswordFieldProps) {
   const fieldErrorId = `${registration.name}-error`;
   return (
     <Field data-invalid={Boolean(errorMessage)}>
       <FieldLabel htmlFor={registration.name}>{label}</FieldLabel>
       <InputGroup>
-        <InputGroupAddon><Lock className="size-4" /></InputGroupAddon>
+        <InputGroupAddon>
+          <Lock className="size-4" />
+        </InputGroupAddon>
         <InputGroupInput
           id={registration.name}
           type={isPasswordVisible ? "text" : "password"}
@@ -353,7 +450,11 @@ function AuthenticationPasswordField({ label, isPasswordVisible, onToggleVisibil
           {...registration}
         />
         <InputGroupAddon align="inline-end">
-          <InputGroupButton type="button" onClick={onToggleVisibility} aria-label={isPasswordVisible ? "Hide password" : "Show password"}>
+          <InputGroupButton
+            type="button"
+            onClick={onToggleVisibility}
+            aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+          >
             {isPasswordVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </InputGroupButton>
         </InputGroupAddon>

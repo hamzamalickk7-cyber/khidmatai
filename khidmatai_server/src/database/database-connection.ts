@@ -5,10 +5,14 @@ import { applicationLogger } from "../config/logger-configuration.js";
 import * as authenticationDatabaseSchema from "./schema/authentication-schema.js";
 import * as providerOnboardingDatabaseSchema from "./schema/provider-onboarding-schema.js";
 import * as customerProfileDatabaseSchema from "./schema/customer-profile-schema.js";
+import * as platformCatalogueDatabaseSchema from "./schema/platform-catalogue-schema.js";
 
 export const postgresqlConnectionPool = new Pool({
   connectionString: backendEnvironmentConfiguration.DATABASE_URL,
-  max: backendEnvironmentConfiguration.NODE_ENV === "production" ? 20 : 5,
+  // Provider administration detail loads several independent, indexed profile
+  // collections in parallel. Ten local connections prevent those reads from
+  // being serialized into multiple network round trips during development.
+  max: backendEnvironmentConfiguration.NODE_ENV === "production" ? 20 : 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
 });
@@ -21,5 +25,5 @@ postgresqlConnectionPool.on("error", (idleClientError) => {
 });
 
 export const khidmatAiDatabase = drizzle(postgresqlConnectionPool, {
-  schema: { ...authenticationDatabaseSchema, ...customerProfileDatabaseSchema, ...providerOnboardingDatabaseSchema },
+  schema: { ...authenticationDatabaseSchema, ...customerProfileDatabaseSchema, ...providerOnboardingDatabaseSchema, ...platformCatalogueDatabaseSchema },
 });

@@ -3,25 +3,189 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Car, Droplets, HardHat, Snowflake, Sparkles, WashingMachine, Zap, type LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  Car,
+  Droplets,
+  HardHat,
+  Snowflake,
+  Sparkles,
+  WashingMachine,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { SectionEyebrowLabel } from "@/modules/landing/components/section-eyebrow-label";
 
-interface ServiceCategoryDefinition { categoryName: string; IconComponent: LucideIcon; description: string; photographUrl: string; }
+interface ServiceCategoryDefinition {
+  categoryName: string;
+  IconComponent: LucideIcon;
+  description: string;
+  photographUrl: string;
+}
 const serviceCategoryList: ServiceCategoryDefinition[] = [
-  { categoryName: "Plumbing", IconComponent: Droplets, description: "Leaks, blockages, fittings and water systems", photographUrl: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=1200&q=90" },
-  { categoryName: "Electrical", IconComponent: Zap, description: "Wiring, switches, lighting and outages", photographUrl: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=900&q=90" },
-  { categoryName: "Appliances", IconComponent: WashingMachine, description: "Fridges, washers, ovens and dispensers", photographUrl: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=900&q=90" },
-  { categoryName: "AC & cooling", IconComponent: Snowflake, description: "Installation, service, repair and maintenance", photographUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=90" },
-  { categoryName: "Automotive", IconComponent: Car, description: "Mechanics, battery, tyres and diagnostics", photographUrl: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=900&q=90" },
-  { categoryName: "Construction", IconComponent: HardHat, description: "Welding, carpentry, painting and tiling", photographUrl: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=900&q=90" },
+  {
+    categoryName: "Plumbing",
+    IconComponent: Droplets,
+    description: "Leaks, blockages, fittings and water systems",
+    photographUrl: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=1200&q=90",
+  },
+  {
+    categoryName: "Electrical",
+    IconComponent: Zap,
+    description: "Wiring, switches, lighting and outages",
+    photographUrl: "/images/landing/electrical-category-repair.png",
+  },
+  {
+    categoryName: "Appliances",
+    IconComponent: WashingMachine,
+    description: "Fridges, washers, ovens and dispensers",
+    photographUrl: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=900&q=90",
+  },
+  {
+    categoryName: "AC & cooling",
+    IconComponent: Snowflake,
+    description: "Installation, service, repair and maintenance",
+    photographUrl: "/images/landing/ac-cooling-category-repair.png",
+  },
+  {
+    categoryName: "Automotive",
+    IconComponent: Car,
+    description: "Mechanics, battery, tyres and diagnostics",
+    photographUrl: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=900&q=90",
+  },
+  {
+    categoryName: "Construction",
+    IconComponent: HardHat,
+    description: "Welding, carpentry, painting and tiling",
+    photographUrl: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=900&q=90",
+  },
 ];
 
 export function ServiceCategoryShowcaseSection() {
   const [featuredCategory, ...remainingCategoryList] = serviceCategoryList;
-  return <section id="services" className="scroll-mt-24 bg-white py-20 sm:py-28"><div className="mx-auto max-w-screen-2xl px-5 sm:px-8 lg:px-10"><div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div className="max-w-2xl"><SectionEyebrowLabel>Service categories</SectionEyebrowLabel><h2 className="mt-3 text-4xl sm:text-5xl">Start with what needs attention today.</h2><p className="mt-5 text-lg leading-7 text-ink/60">Explore focused categories with questions and provider requirements designed for the actual work.</p></div><Link href="/#book-a-service-request" className="inline-flex h-11 w-fit items-center justify-center gap-2 rounded-full border border-brand/20 bg-brand-soft px-5 text-sm font-semibold text-brand transition hover:border-brand hover:bg-brand hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Describe a different job <ArrowRight className="size-4" /></Link></div>
-  <div className="mt-12 grid gap-5 lg:grid-cols-2">{featuredCategory && <motion.div initial={{ opacity:0,y:20 }} whileInView={{ opacity:1,y:0 }} viewport={{ once:true }}><CategoryCard category={featuredCategory} isFeatured /></motion.div>}<div className="grid gap-5 sm:grid-cols-2">{remainingCategoryList.slice(0,4).map((category,index)=><motion.div key={category.categoryName} initial={{ opacity:0,y:20 }} whileInView={{ opacity:1,y:0 }} viewport={{ once:true }} transition={{ delay:index*.06 }}><CategoryCard category={category} /></motion.div>)}</div></div>
-  {remainingCategoryList[4] && <motion.div initial={{ opacity:0,y:20 }} whileInView={{ opacity:1,y:0 }} viewport={{ once:true }} className="mt-5 grid overflow-hidden rounded-[2rem] border border-ink/8 bg-[#f7f7fb] md:grid-cols-[0.72fr_1.28fr]"><div className="flex flex-col justify-center p-7 sm:p-9"><span className="grid size-11 place-items-center rounded-2xl bg-white text-brand shadow-sm"><HardHat className="size-5" /></span><h3 className="mt-6 text-2xl">Construction &amp; finishing</h3><p className="mt-3 text-sm leading-6 text-ink/60">Welding, carpentry, painting, masonry and tiling—specialized work deserves specialized matching.</p><Link href="/?service=Construction#book-a-service-request" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand">Explore skilled trades <ArrowRight className="size-4" /></Link></div><div className="relative min-h-72 md:min-h-80"><Image src={remainingCategoryList[4].photographUrl} alt="Construction and finishing professional at work" fill sizes="(max-width:768px) 90vw,58vw" className="object-cover" /></div></motion.div>}
-  <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-dashed border-brand/25 bg-brand-soft/40 px-6 py-5 sm:flex-row sm:items-center"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-full bg-white text-brand"><Sparkles className="size-4" /></span><div><p className="text-sm font-semibold">Can&apos;t find the right category?</p><p className="mt-0.5 text-xs text-ink/50">Describe the problem naturally and KhidmatAI can suggest where it belongs.</p></div></div><Link href="/#book-a-service-request" className="text-sm font-semibold text-brand">Start with your problem</Link></div></div></section>;
+  return (
+    <section id="services" className="scroll-mt-24 bg-white py-20 sm:py-24">
+      <div className="mx-auto max-w-screen-2xl px-5 sm:px-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <SectionEyebrowLabel>Service categories</SectionEyebrowLabel>
+            <h2 className="mt-3 text-4xl sm:text-5xl">Start with what needs attention today.</h2>
+            <p className="text-ink/60 mt-5 text-lg leading-7">
+              Explore focused categories with questions and provider requirements designed for the actual work.
+            </p>
+          </div>
+          <Link
+            href="/explore"
+            className="border-brand/20 bg-brand-soft text-brand hover:border-brand hover:bg-brand focus-visible:outline-brand inline-flex h-11 w-fit items-center justify-center gap-2 rounded-full border px-5 text-sm font-semibold transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            Describe a different job <ArrowRight className="size-4" />
+          </Link>
+        </div>
+        <div className="mt-12 grid gap-5 lg:grid-cols-2">
+          {featuredCategory && (
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <CategoryCard category={featuredCategory} isFeatured />
+            </motion.div>
+          )}
+          <div className="grid gap-5 sm:grid-cols-2">
+            {remainingCategoryList.slice(0, 4).map((category, index) => (
+              <motion.div
+                key={category.categoryName}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.06 }}
+              >
+                <CategoryCard category={category} />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+        {remainingCategoryList[4] && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="border-ink/8 bg-background mt-5 grid overflow-hidden rounded-2xl border md:grid-cols-[0.72fr_1.28fr]"
+          >
+            <div className="flex flex-col justify-center p-7 sm:p-9">
+              <span className="text-brand grid size-11 place-items-center rounded-2xl bg-white shadow-sm">
+                <HardHat className="size-5" />
+              </span>
+              <h3 className="mt-6 text-2xl">Construction &amp; finishing</h3>
+              <p className="text-ink/60 mt-3 text-sm leading-6">
+                Welding, carpentry, painting, masonry and tiling—specialized work deserves specialized matching.
+              </p>
+              <Link
+                href="/explore?service=construction"
+                className="text-brand mt-6 inline-flex items-center gap-2 text-sm font-semibold"
+              >
+                Explore skilled trades <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <div className="relative min-h-72 md:min-h-80">
+              <Image
+                src={remainingCategoryList[4].photographUrl}
+                alt="Construction and finishing professional at work"
+                fill
+                sizes="(max-width:768px) 90vw,58vw"
+                className="object-cover"
+              />
+            </div>
+          </motion.div>
+        )}
+        <div className="border-brand/25 bg-brand-soft/40 mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-dashed px-6 py-5 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <span className="text-brand grid size-10 place-items-center rounded-full bg-white">
+              <Sparkles className="size-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">Can&apos;t find the right category?</p>
+              <p className="text-ink/50 mt-0.5 text-xs">
+                Describe the problem naturally and KhidmatAI can suggest where it belongs.
+              </p>
+            </div>
+          </div>
+          <Link href="/explore" className="text-brand text-sm font-semibold">
+            Start with your problem
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
 }
 
-function CategoryCard({ category, isFeatured=false }: { category: ServiceCategoryDefinition; isFeatured?: boolean }) { return <Link href={`/?service=${encodeURIComponent(category.categoryName)}#book-a-service-request`} className="group block h-full overflow-hidden rounded-[2rem] border border-ink/8 bg-white transition hover:-translate-y-1 hover:border-brand/25 hover:shadow-[0_24px_55px_-30px_rgba(11,15,29,.3)]"><div className={`relative overflow-hidden bg-neutral-100 ${isFeatured ? "aspect-[4/3] lg:aspect-[4/3]" : "aspect-[4/3]"}`}><Image src={category.photographUrl} alt={`${category.categoryName} professional at work`} fill sizes={isFeatured ? "(max-width:1024px) 90vw,46vw" : "(max-width:640px) 90vw,(max-width:1024px) 44vw,22vw"} className="object-cover transition duration-500 group-hover:scale-[1.03]" /><span className="absolute left-4 top-4 grid size-10 place-items-center rounded-xl bg-white/95 text-brand shadow-sm backdrop-blur"><category.IconComponent className="size-5" /></span></div><div className={isFeatured ? "p-6 sm:p-7" : "p-5"}><div className="flex items-start justify-between gap-4"><div><h3 className={isFeatured ? "text-2xl" : "text-lg"}>{category.categoryName}</h3><p className="mt-2 text-sm leading-6 text-ink/55">{category.description}</p></div><span className="grid size-9 shrink-0 place-items-center rounded-full border border-ink/10 text-ink transition group-hover:border-brand group-hover:bg-brand group-hover:text-white"><ArrowRight className="size-4" /></span></div></div></Link>; }
+function CategoryCard({ category, isFeatured = false }: { category: ServiceCategoryDefinition; isFeatured?: boolean }) {
+  return (
+    <Link
+      href={`/explore?service=${encodeURIComponent(category.categoryName)}`}
+      className="group border-ink/8 hover:border-brand/25 block h-full overflow-hidden rounded-[2rem] border bg-white transition hover:-translate-y-1 hover:shadow-[0_24px_55px_-30px_rgba(11,15,29,.3)]"
+    >
+      <div
+        className={`relative overflow-hidden bg-neutral-100 ${isFeatured ? "aspect-[4/3] lg:aspect-[4/3]" : "aspect-[4/3]"}`}
+      >
+        <Image
+          src={category.photographUrl}
+          alt={`${category.categoryName} service work and equipment`}
+          fill
+          sizes={isFeatured ? "(max-width:1024px) 90vw,46vw" : "(max-width:640px) 90vw,(max-width:1024px) 44vw,22vw"}
+          className="object-cover transition duration-500 group-hover:scale-[1.03]"
+        />
+        <span className="text-brand absolute top-4 left-4 grid size-10 place-items-center rounded-xl bg-white/95 shadow-sm backdrop-blur">
+          <category.IconComponent className="size-5" />
+        </span>
+      </div>
+      <div className={isFeatured ? "p-6 sm:p-7" : "p-5"}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className={isFeatured ? "text-2xl" : "text-lg"}>{category.categoryName}</h3>
+            <p className="text-ink/55 mt-2 text-sm leading-6">{category.description}</p>
+          </div>
+          <span className="border-ink/10 text-ink group-hover:border-brand group-hover:bg-brand grid size-9 shrink-0 place-items-center rounded-full border transition group-hover:text-white">
+            <ArrowRight className="size-4" />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}

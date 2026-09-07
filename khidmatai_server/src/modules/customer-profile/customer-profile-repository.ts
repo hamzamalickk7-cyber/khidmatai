@@ -7,6 +7,7 @@ import {
   customerServicePreferences,
 } from "../../database/schema/customer-profile-schema.js";
 import { auditEvents } from "../../database/schema/provider-onboarding-schema.js";
+import { customerProfileMediaAssets } from "../../database/schema/platform-catalogue-schema.js";
 import type { CustomerProfileUpdateInput, CustomerSavedAddressInput } from "./customer-profile-types.js";
 
 export async function findCustomerProfileByAuthenticationUserId(authenticationUserId: string) {
@@ -14,6 +15,7 @@ export async function findCustomerProfileByAuthenticationUserId(authenticationUs
     .select({
       id: customerProfiles.id,
       fullName: authenticationUsers.name,
+      username: authenticationUsers.username,
       emailAddress: authenticationUsers.email,
       phoneNumber: customerProfiles.phoneNumber,
       city: customerProfiles.city,
@@ -27,27 +29,32 @@ export async function findCustomerProfileByAuthenticationUserId(authenticationUs
     .where(eq(customerProfiles.userId, authenticationUserId))
     .limit(1);
   if (!profile) return null;
-  const [addresses, preferences] = await Promise.all([
+  const [addresses, preferences, profileImages] = await Promise.all([
     khidmatAiDatabase
       .select()
       .from(customerSavedAddresses)
       .where(eq(customerSavedAddresses.customerProfileId, profile.id))
       .orderBy(asc(customerSavedAddresses.createdAt)),
     khidmatAiDatabase
-      .select({ categoryKey: customerServicePreferences.categoryKey })
+      .select({ categoryKey: sql<string>`coalesce((select slug from service_categories where id = ${customerServicePreferences.categoryId}), ${customerServicePreferences.categoryKey})` })
       .from(customerServicePreferences)
       .where(eq(customerServicePreferences.customerProfileId, profile.id))
       .orderBy(asc(customerServicePreferences.categoryKey)),
+    khidmatAiDatabase.select({ id: customerProfileMediaAssets.id, url: customerProfileMediaAssets.secureDeliveryUrl }).from(customerProfileMediaAssets).where(eq(customerProfileMediaAssets.customerProfileId, profile.id)).limit(1),
   ]);
   return {
     ...profile,
     savedAddresses: addresses,
     servicePreferenceKeys: preferences.map(({ categoryKey }) => categoryKey),
+    profileImage: profileImages[0] ?? null,
+    isBasicProfileComplete: Boolean(profile.username && profile.phoneNumber && profile.city),
   };
 }
 
 export async function updateCustomerProfile(authenticationUserId: string, input: CustomerProfileUpdateInput) {
   return khidmatAiDatabase.transaction(async (transaction) => {
+    const categoryResult = input.servicePreferenceKeys.length ? await transaction.execute(sql<{ id: string; slug: string }>`select id, slug from service_categories where is_active = true and slug = any(${input.servicePreferenceKeys})`) : null;
+    if (categoryResult && categoryResult.rows.length !== input.servicePreferenceKeys.length) return null;
     const [profile] = await transaction
       .update(customerProfiles)
       .set({
@@ -69,10 +76,10 @@ export async function updateCustomerProfile(authenticationUserId: string, input:
     await transaction
       .delete(customerServicePreferences)
       .where(eq(customerServicePreferences.customerProfileId, profile.id));
-    if (input.servicePreferenceKeys.length)
-      await transaction
-        .insert(customerServicePreferences)
-        .values(input.servicePreferenceKeys.map((categoryKey) => ({ customerProfileId: profile.id, categoryKey })));
+    if (input.servicePreferenceKeys.length) {
+      const resolvedCategories = categoryResult!.rows as Array<{ id: string; slug: string }>;
+      await transaction.insert(customerServicePreferences).values(resolvedCategories.map((category) => ({ customerProfileId: profile.id, categoryKey: category.slug, categoryId: category.id })));
+    }
     await transaction
       .insert(auditEvents)
       .values({

@@ -1,36 +1,52 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Camera, Move, Upload, ZoomIn } from "lucide-react";
+import { Move, Pencil, Upload, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export interface ProfileAvatarCropResult {
   objectUrl: string;
+  file: File;
   zoom: number;
   offsetXPercent: number;
   offsetYPercent: number;
 }
 
 interface ProfileAvatarUploadDialogProps {
-  currentCrop: ProfileAvatarCropResult | null;
-  onCropConfirmed: (crop: ProfileAvatarCropResult) => void;
+  onCropConfirmed: (crop: ProfileAvatarCropResult) => Promise<void>;
+  triggerLabel: string;
 }
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 2.5;
 const CROP_VIEWPORT_SIZE_PIXELS = 260;
 
-export function ProfileAvatarUploadDialog({ currentCrop, onCropConfirmed }: ProfileAvatarUploadDialogProps) {
+export function ProfileAvatarUploadDialog({ onCropConfirmed, triggerLabel }: ProfileAvatarUploadDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dragStateRef = useRef<{ pointerId: number; startClientX: number; startClientY: number; startOffsetXPercent: number; startOffsetYPercent: number } | null>(null);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startOffsetXPercent: number;
+    startOffsetYPercent: number;
+  } | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [pendingObjectUrl, setPendingObjectUrl] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [zoom, setZoom] = useState(1.2);
   const [offsetXPercent, setOffsetXPercent] = useState(50);
   const [offsetYPercent, setOffsetYPercent] = useState(50);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -51,6 +67,7 @@ export function ProfileAvatarUploadDialog({ currentCrop, onCropConfirmed }: Prof
     }
 
     setPendingObjectUrl(URL.createObjectURL(selectedFile));
+    setPendingFile(selectedFile);
     setZoom(1.2);
     setOffsetXPercent(50);
     setOffsetYPercent(50);
@@ -83,11 +100,19 @@ export function ProfileAvatarUploadDialog({ currentCrop, onCropConfirmed }: Prof
     dragStateRef.current = null;
   }
 
-  function confirmCrop() {
-    if (!pendingObjectUrl) return;
-    onCropConfirmed({ objectUrl: pendingObjectUrl, zoom, offsetXPercent, offsetYPercent });
-    setIsDialogOpen(false);
-    toast.success("Photo ready", { description: "This preview isn't saved anywhere yet — profile editing has no backend." });
+  async function confirmCrop() {
+    if (!pendingObjectUrl || !pendingFile) return;
+    try {
+      setIsSaving(true);
+      await onCropConfirmed({ objectUrl: pendingObjectUrl, file: pendingFile, zoom, offsetXPercent, offsetYPercent });
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error("Profile photo could not be saved", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -100,21 +125,24 @@ export function ProfileAvatarUploadDialog({ currentCrop, onCropConfirmed }: Prof
         onChange={(changeEvent) => handleSelectedFile(changeEvent.target.files)}
       />
 
-      <button
+      <Button
         type="button"
-        aria-label={currentCrop ? "Change profile photo" : "Upload profile photo"}
         onClick={() => fileInputRef.current?.click()}
-        className="absolute inset-x-0 bottom-0 flex h-8 items-center justify-center gap-1.5 bg-ink/70 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+        variant="outline"
+        size="sm"
+        className="border-ink/10 hover:border-brand/30 hover:bg-brand-soft/50 hover:text-brand h-8 rounded-lg px-3"
       >
-        <Camera className="size-3.5" />
-        {currentCrop ? "Change" : "Upload"}
-      </button>
+        <Pencil className="size-3.5" />
+        {triggerLabel}
+      </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Adjust your photo</DialogTitle>
-            <DialogDescription>Drag to reposition and use the slider to zoom. Nothing is uploaded — this is a design preview only.</DialogDescription>
+            <DialogDescription>
+              Drag to reposition and use the slider to preview how your saved profile photo will appear.
+            </DialogDescription>
           </DialogHeader>
 
           {pendingObjectUrl && (
@@ -125,24 +153,26 @@ export function ProfileAvatarUploadDialog({ currentCrop, onCropConfirmed }: Prof
                 onPointerUp={handleCropDragEnd}
                 onPointerCancel={handleCropDragEnd}
                 style={{ width: CROP_VIEWPORT_SIZE_PIXELS, height: CROP_VIEWPORT_SIZE_PIXELS }}
-                className="relative touch-none overflow-hidden rounded-full border-2 border-dashed border-brand/40 bg-ink/5 [cursor:grab] active:[cursor:grabbing]"
+                className="border-brand/40 bg-ink/5 relative [cursor:grab] touch-none overflow-hidden rounded-full border-2 border-dashed active:[cursor:grabbing]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- object URLs can't go through next/image's remote loader */}
                 <img
                   src={pendingObjectUrl}
                   alt="Selected profile photo, drag to reposition"
                   draggable={false}
-                  className="absolute left-1/2 top-1/2 h-full w-full max-w-none select-none object-cover"
-                  style={{ transform: `translate(-50%, -50%) translate(${50 - offsetXPercent}%, ${50 - offsetYPercent}%) scale(${zoom})` }}
+                  className="absolute top-1/2 left-1/2 h-full w-full max-w-none object-cover select-none"
+                  style={{
+                    transform: `translate(-50%, -50%) translate(${50 - offsetXPercent}%, ${50 - offsetYPercent}%) scale(${zoom})`,
+                  }}
                 />
               </div>
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-ink/45">
+              <p className="text-ink/45 mt-3 flex items-center gap-1.5 text-xs">
                 <Move className="size-3.5" />
                 Drag the photo to reposition it
               </p>
 
               <div className="mt-4 flex w-full items-center gap-3">
-                <ZoomIn className="size-4 shrink-0 text-ink/40" />
+                <ZoomIn className="text-ink/40 size-4 shrink-0" />
                 <input
                   type="range"
                   min={MIN_ZOOM}
@@ -151,19 +181,24 @@ export function ProfileAvatarUploadDialog({ currentCrop, onCropConfirmed }: Prof
                   value={zoom}
                   onChange={(changeEvent) => setZoom(Number(changeEvent.target.value))}
                   aria-label="Zoom"
-                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink/10 accent-brand"
+                  className="bg-ink/10 accent-brand h-1.5 w-full cursor-pointer appearance-none rounded-full"
                 />
               </div>
             </div>
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" className="rounded-full" onClick={() => setIsDialogOpen(false)}>
+            <Button type="button" variant="outline" className="rounded-lg" disabled={isSaving} onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" className="gap-2 rounded-full" onClick={confirmCrop}>
+            <Button
+              type="button"
+              className="bg-brand hover:bg-brand-deep gap-2 rounded-lg text-white"
+              onClick={confirmCrop}
+              disabled={isSaving}
+            >
               <Upload className="size-4" />
-              Use this photo
+              {isSaving ? "Uploading…" : "Use this photo"}
             </Button>
           </DialogFooter>
         </DialogContent>

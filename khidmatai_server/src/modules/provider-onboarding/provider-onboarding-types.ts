@@ -1,4 +1,4 @@
-export const editableProviderOnboardingStatuses = ["draft", "changes_required"] as const;
+export const editableProviderOnboardingStatuses = ["draft", "changes_required", "active"] as const;
 export type EditableProviderOnboardingStatus = (typeof editableProviderOnboardingStatuses)[number];
 
 export interface ProviderReferenceInput {
@@ -21,5 +21,13 @@ export interface ProviderOnboardingUpdateInput {
   categoryKeys: string[];
   serviceAreas: string[];
   references: ProviderReferenceInput[];
+  languages: string[];
+  services: Array<{ categorySlug: string; name: string; description?: string; startingPriceAmount: number }>;
+  weeklyAvailability: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+  isAvailableForNewJobs: boolean;
+  offersEmergencyService: boolean;
+  maximumTravelDistanceKilometers: number;
   expectedVersion: number;
 }
+
+export type ProviderOnboardingPatchInput = Partial<Omit<ProviderOnboardingUpdateInput, "expectedVersion">> & Pick<ProviderOnboardingUpdateInput, "expectedVersion">;

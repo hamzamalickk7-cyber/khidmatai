@@ -1,409 +1,429 @@
 "use client";
 
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
-import {
-  BriefcaseBusiness,
-  CalendarClock,
-  IdCard,
-  Images,
-  Mail,
-  MapPin,
-  MapPinned,
-  MessageSquareText,
-  Phone,
-  Plus,
-  ShieldCheck,
-  Star,
-  UserRound,
-  Wrench,
-  X,
-  type LucideIcon,
-} from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  BadgeCheck,
+  BriefcaseBusiness,
+  CalendarDays,
+  CircleUserRound,
+  Images,
+  Lightbulb,
+  ShieldCheck,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ProfileCompletenessCard } from "@/modules/profile/components/profile-completeness-card";
-import { ProfileHeaderBanner } from "@/modules/profile/components/profile-header-banner";
-import { ProfileSectionCard } from "@/modules/profile/components/profile-section-card";
+import { ProfileFeedbackBanner, type ProfileFeedbackState } from "@/modules/profile/components/profile-operation-feedback";
+import {
+  ProfileSectionTabs,
+  type ProfileSectionTabDefinition,
+} from "@/modules/profile/components/profile-section-tabs";
 import { ProviderApplicationProgressCard } from "@/modules/profile/components/provider-application-progress-card";
+import { ProviderAboutMeSection } from "@/modules/profile/components/provider/provider-about-me-section";
+import { ProviderAvailabilitySection } from "@/modules/profile/components/provider/provider-availability-section";
+import { ProviderDocumentsSection } from "@/modules/profile/components/provider/provider-documents-section";
+import { ProviderGallerySection } from "@/modules/profile/components/provider/provider-gallery-section";
+import { ProviderProfileHeaderBanner } from "@/modules/profile/components/provider/provider-profile-header-banner";
+import { ProviderReferencesSection } from "@/modules/profile/components/provider/provider-references-section";
+import { ProviderServicesSection } from "@/modules/profile/components/provider/provider-services-section";
+import { useProviderProfileQuery, useSubmitProviderProfileMutation, useUpdateProviderProfileMutation } from "@/modules/profile/hooks/use-provider-profile-query";
+import type { ProviderProfileData, ProviderProfileUpdateInput } from "@/modules/profile/types/provider-profile-types";
+import { Spinner } from "@/components/ui/spinner";
+import { RouteLoadingState } from "@/components/feedback/route-loading-state";
+import type { PublicServiceCategory } from "@/modules/explore/types/public-provider-directory-types";
 
 interface ProviderProfileViewProperties {
+  authenticationUserId: string;
   providerName: string;
   providerEmail: string;
+  initialTabKey?: string;
+  serviceCategories: PublicServiceCategory[];
 }
 
-const providerWorkImageList = [
-  {
-    source: "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=800&q=85",
-    alternativeText: "Electrician working on a residential electrical panel",
-  },
-  {
-    source: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=85",
-    alternativeText: "Electrical tools prepared for a home service job",
-  },
-  {
-    source: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=85",
-    alternativeText: "Professional completing repair work",
-  },
+const providerTipList = [
+  "Use a clear profile photo customers can recognize.",
+  "Describe the exact services you can confidently complete.",
+  "Add recent work photos and keep your availability accurate.",
 ];
 
-const initialReferenceList = ["Ahmed Bilal · Gulberg · +92 300 1112223", "Sana Tariq · Model Town · +92 321 4445556"];
+const sectionLabels = {
+  header: "Basic profile",
+  about: "About me",
+  services: "Services",
+  gallery: "Work gallery",
+  availability: "Availability",
+  documents: "Documents",
+} as const;
 
-const cnicPattern = /^\d{5}-\d{7}-\d{1}$/;
+type SectionKey = keyof typeof sectionLabels;
+type ProviderProfileTabKey = "profile" | "services" | "gallery" | "availability" | "verification";
 
-const providerProfilePreviewSchema = z
-  .object({
-    fullName: z.string().trim().min(2, "Enter your full name."),
-    phoneNumber: z.string().trim().min(10, "Enter a valid phone number."),
-    cnicNumber: z.string().trim().regex(cnicPattern, "Use the format 12345-1234567-1."),
-    city: z.string().trim().min(2, "Enter your city."),
-    addressLine: z.string().trim().min(5, "Enter your street address."),
-    professionalTitle: z.string().trim().min(3, "Enter your professional title."),
-    yearsOfExperience: z.number().int().min(0, "Enter 0 or more years.").max(60, "Enter a realistic number of years."),
-    professionalBio: z.string().trim().min(40, "Write at least 40 characters about your work."),
-  })
-  .strict();
+const providerProfileTabList: readonly ProfileSectionTabDefinition<ProviderProfileTabKey>[] = [
+  { key: "profile", label: "My profile", IconComponent: CircleUserRound },
+  { key: "services", label: "Services", IconComponent: BriefcaseBusiness },
+  { key: "gallery", label: "Work gallery", IconComponent: Images },
+  { key: "availability", label: "Availability", IconComponent: CalendarDays },
+  { key: "verification", label: "Verification", IconComponent: ShieldCheck },
+];
 
-type ProviderProfilePreviewValues = z.infer<typeof providerProfilePreviewSchema>;
-
-export function ProviderProfileView({ providerName, providerEmail }: ProviderProfileViewProperties) {
-  const initialValues: ProviderProfilePreviewValues = {
-    fullName: providerName,
-    phoneNumber: "+92 300 1234567",
-    cnicNumber: "35202-1234567-1",
-    city: "Lahore",
-    addressLine: "House 12, Street 4, Model Town",
-    professionalTitle: "Electrician & solar technician",
-    yearsOfExperience: 8,
-    professionalBio:
-      "Residential electrician experienced in wiring, fault finding, switchboard upgrades and small solar installations. This sample biography demonstrates how an approved provider profile will appear to customers.",
-  };
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [savedValues, setSavedValues] = useState(initialValues);
-  const [referenceList, setReferenceList] = useState(initialReferenceList);
-  const [savedReferenceList, setSavedReferenceList] = useState(initialReferenceList);
-  const [pendingReference, setPendingReference] = useState("");
-
-  const profileForm = useForm<ProviderProfilePreviewValues>({
-    resolver: zodResolver(providerProfilePreviewSchema),
-    defaultValues: initialValues,
+export function ProviderProfileView({ authenticationUserId, providerName, providerEmail, initialTabKey, serviceCategories }: ProviderProfileViewProperties) {
+  const profileQuery = useProviderProfileQuery(authenticationUserId);
+  const updateProfileMutation = useUpdateProviderProfileMutation(authenticationUserId);
+  const submitProfileMutation = useSubmitProviderProfileMutation(authenticationUserId);
+  const [activeTabKey, setActiveTabKey] = useState<ProviderProfileTabKey>(() => normalizeProviderTabKey(initialTabKey));
+  const [sectionCompletionMap, setSectionCompletionMap] = useState<Record<SectionKey, boolean>>({
+    header: false,
+    about: false,
+    services: false,
+    gallery: false,
+    availability: false,
+    documents: false,
   });
+  const [profileFeedback, setProfileFeedback] = useState<ProfileFeedbackState>({});
+  const [isSubmissionDialogOpen, setIsSubmissionDialogOpen] = useState(false);
+  const [isSubmissionRequestPending, setIsSubmissionRequestPending] = useState(false);
 
-  function cancelEditing() {
-    profileForm.reset(savedValues);
-    setReferenceList(savedReferenceList);
-    setPendingReference("");
-    setIsEditing(false);
+  useEffect(() => {
+    function receiveProfileFeedback(event: Event) { setProfileFeedback((event as CustomEvent<ProfileFeedbackState>).detail); }
+    window.addEventListener("khidmatai:profile-feedback", receiveProfileFeedback);
+    return () => window.removeEventListener("khidmatai:profile-feedback", receiveProfileFeedback);
+  }, []);
+
+  const makeCompletenessHandler = useCallback(
+    (sectionKey: SectionKey) => (isComplete: boolean) =>
+      setSectionCompletionMap((current) =>
+        current[sectionKey] === isComplete ? current : { ...current, [sectionKey]: isComplete },
+      ),
+    [],
+  );
+
+  const profileChecklist = (Object.keys(sectionLabels) as SectionKey[]).map((sectionKey) => ({
+    label: sectionLabels[sectionKey],
+    isComplete: sectionCompletionMap[sectionKey],
+  }));
+  if (profileQuery.isLoading || (profileQuery.isFetching && !profileQuery.data)) {
+    return (
+      <main className="bg-background flex-1">
+        <RouteLoadingState label="Loading your profile" description="Fetching your saved details." />
+      </main>
+    );
   }
-
-  function savePreview(values: ProviderProfilePreviewValues) {
-    setSavedValues(values);
-    setSavedReferenceList(referenceList);
-    setIsEditing(false);
-    toast.success("Provider profile preview updated", { description: "No data was sent to the backend." });
+  if (!profileQuery.data) {
+    return (
+      <main className="grid min-h-[60vh] place-items-center px-4 text-center">
+        <div>
+          <h1 className="text-xl font-semibold">Your provider profile could not be loaded</h1>
+          <p className="mt-2 text-sm text-ink/55">Check that the server is available, then try again.</p>
+          <Button className="mt-4" onClick={() => void profileQuery.refetch()}>
+            Try again
+          </Button>
+        </div>
+      </main>
+    );
   }
+  const profile = profileQuery.data;
+  const hasBeenSubmitted = ["submitted", "under_review"].includes(profile.status);
+  const isApproved = profile.status === "active";
+  const areRequiredSectionsComplete = profileChecklist.every((item) => item.isComplete);
+  const canSubmitForReview = areRequiredSectionsComplete;
 
-  function addReference() {
-    const trimmedReference = pendingReference.trim();
-    if (!trimmedReference) return;
-    setReferenceList((currentList) => [...currentList, trimmedReference]);
-    setPendingReference("");
-  }
-
-  function removeReference(referenceToRemove: string) {
-    setReferenceList((currentList) => currentList.filter((reference) => reference !== referenceToRemove));
+  async function saveProviderProfilePatch(patch: Partial<ProviderProfileUpdateInput>) {
+    await updateProfileMutation.mutateAsync({ ...patch, expectedVersion: profile.version });
   }
 
   return (
-    <main className="flex-1 bg-[#f7f7f8] px-5 py-8 sm:px-8 sm:py-10">
-      <form onSubmit={profileForm.handleSubmit(savePreview)} className="mx-auto max-w-6xl">
-        <ProfileHeaderBanner
-          displayName={savedValues.fullName}
-          emailAddress={providerEmail}
-          roleLabel="Service provider"
-          statusLabel="Draft profile"
-          locationLabel={`${savedValues.city}, Pakistan · Preview location`}
-          phoneNumberLabel={`${savedValues.phoneNumber} · Preview`}
-          quickFactList={[
-            savedValues.professionalTitle,
-            `${savedValues.yearsOfExperience} yrs experience`,
-            `${referenceList.length} references`,
-            "No reviews yet",
-          ]}
-          initialProfileImageUrl="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=85"
-          isEditing={isEditing}
-          onBeginEditing={() => setIsEditing(true)}
-          onCancelEditing={cancelEditing}
+    <main className="bg-background min-h-full flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-5">
+          <p className="text-brand text-xs font-bold tracking-[0.16em] uppercase">Provider workspace</p>
+          <h1 className="text-ink mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Manage your profile</h1>
+          <p className="text-ink/50 mt-2 text-sm">Keep your public information accurate and prepare it for review.</p>
+        </div>
+
+        <ProfileSectionTabs
+          tabList={providerProfileTabList}
+          activeTabKey={activeTabKey}
+          onTabChange={(tabKey) => changeTabAndUpdateUrl(tabKey, setActiveTabKey)}
         />
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-6">
-            <section className="rounded-3xl border border-ink/10 bg-white p-6 sm:p-7">
-              <div className="border-b border-ink/8 pb-5">
-                <p className="text-xs font-bold uppercase tracking-[.16em] text-brand">Private account details</p>
-                <h2 className="mt-2 text-xl">Basic information</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/50">
-                  Used by KhidmatAI for account support, identity verification and job coordination. Only approved public details appear in Explore.
-                </p>
-              </div>
+        <div className="mt-5 space-y-5">
+          <ProviderProfileHeaderBanner
+            initialDisplayName={profile.fullName || providerName}
+            initialUsername={profile.username ?? undefined}
+            initialProfessionalTitle={profile.professionalTitle ?? ""}
+            initialYearsOfExperience={profile.yearsOfExperience ?? 0}
+            initialCity={profile.city ?? ""}
+            initialIsAvailableNow={profile.isAvailableForNewJobs}
+            statusLabel={profile.status.replaceAll("_", " ")}
+            isVerified={profile.status === "active"}
+            referenceCount={profile.references.length}
+            onSaveProfile={saveProviderProfilePatch}
+            profileImage={profile.mediaAssets.find((asset) => asset.mediaPurpose === "profile_image")}
+            onCompletenessChange={makeCompletenessHandler("header")}
+          />
 
-              {isEditing ? (
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <EditableProviderField label="Full name" error={profileForm.formState.errors.fullName?.message}>
-                    <Input {...profileForm.register("fullName")} aria-invalid={Boolean(profileForm.formState.errors.fullName)} />
-                  </EditableProviderField>
-                  <EditableProviderField label="Email address">
-                    <Input value={providerEmail} disabled />
-                  </EditableProviderField>
-                  <EditableProviderField label="Phone number" error={profileForm.formState.errors.phoneNumber?.message}>
-                    <Input {...profileForm.register("phoneNumber")} aria-invalid={Boolean(profileForm.formState.errors.phoneNumber)} />
-                  </EditableProviderField>
-                  <EditableProviderField label="CNIC number" error={profileForm.formState.errors.cnicNumber?.message}>
-                    <Input placeholder="12345-1234567-1" {...profileForm.register("cnicNumber")} aria-invalid={Boolean(profileForm.formState.errors.cnicNumber)} />
-                  </EditableProviderField>
-                  <EditableProviderField label="City" error={profileForm.formState.errors.city?.message}>
-                    <Input {...profileForm.register("city")} aria-invalid={Boolean(profileForm.formState.errors.city)} />
-                  </EditableProviderField>
-                  <EditableProviderField label="Street address" error={profileForm.formState.errors.addressLine?.message}>
-                    <Input {...profileForm.register("addressLine")} aria-invalid={Boolean(profileForm.formState.errors.addressLine)} />
-                  </EditableProviderField>
-                </div>
-              ) : (
-                <dl className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <BasicInformationItem IconComponent={UserRound} label="Full name" value={savedValues.fullName} />
-                  <BasicInformationItem IconComponent={Mail} label="Email address" value={providerEmail} />
-                  <BasicInformationItem IconComponent={Phone} label="Phone number" value={`${savedValues.phoneNumber} · Preview`} />
-                  <BasicInformationItem IconComponent={IdCard} label="CNIC number" value={maskGovernmentIdentityNumber(savedValues.cnicNumber)} />
-                  <BasicInformationItem IconComponent={MapPin} label="City" value={`${savedValues.city} · Preview`} />
-                  <BasicInformationItem IconComponent={MapPinned} label="Street address" value={`${savedValues.addressLine} · Preview`} />
-                </dl>
-              )}
-            </section>
+          <ProfileCompletenessCard
+            checklist={profileChecklist}
+            onSubmitForReview={() => setIsSubmissionDialogOpen(true)}
+            hasBeenSubmitted={hasBeenSubmitted}
+            isApproved={isApproved}
+            onCompleteNow={() => {
+              const firstIncompleteSection = (Object.keys(sectionLabels) as SectionKey[]).find(
+                (sectionKey) => !sectionCompletionMap[sectionKey],
+              );
+              const targetTabKey = getTabForSection(firstIncompleteSection);
+              changeTabAndUpdateUrl(targetTabKey, setActiveTabKey);
+            }}
+          />
 
-            <section className="overflow-hidden rounded-3xl border border-ink/10 bg-white">
-              <div className="flex flex-col gap-4 border-b border-ink/8 p-6 sm:flex-row sm:items-start sm:justify-between sm:p-7">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold uppercase tracking-[.16em] text-brand">Public listing preview</p>
+          <ProfileFeedbackBanner {...profileFeedback} />
 
-                  {isEditing ? (
-                    <EditableProviderField label="Professional title" error={profileForm.formState.errors.professionalTitle?.message} className="mt-3">
-                      <Input {...profileForm.register("professionalTitle")} aria-invalid={Boolean(profileForm.formState.errors.professionalTitle)} />
-                    </EditableProviderField>
-                  ) : (
-                    <h2 className="mt-2 text-2xl">{savedValues.professionalTitle}</h2>
-                  )}
-
-                  {isEditing ? (
-                    <EditableProviderField label="Years of experience" error={profileForm.formState.errors.yearsOfExperience?.message} className="mt-3 max-w-40">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={60}
-                        {...profileForm.register("yearsOfExperience", { valueAsNumber: true })}
-                        aria-invalid={Boolean(profileForm.formState.errors.yearsOfExperience)}
-                      />
-                    </EditableProviderField>
-                  ) : (
-                    <p className="mt-2 flex items-center gap-2 text-sm text-ink/50">
-                      <BriefcaseBusiness className="size-4" />
-                      {savedValues.yearsOfExperience} years of experience · Preview
-                    </p>
-                  )}
-                </div>
-                <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
-                  Not visible in Explore
-                </span>
-              </div>
-
-              <div className="p-6 sm:p-7">
-                <h3 className="text-sm font-semibold">About</h3>
-
-                {isEditing ? (
-                  <EditableProviderField label="Professional biography" error={profileForm.formState.errors.professionalBio?.message} className="mt-3">
-                    <Textarea {...profileForm.register("professionalBio")} className="min-h-32" aria-invalid={Boolean(profileForm.formState.errors.professionalBio)} />
-                  </EditableProviderField>
-                ) : (
-                  <p className="mt-2 max-w-3xl text-sm leading-7 text-ink/60">{savedValues.professionalBio}</p>
-                )}
-
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {["Home wiring", "Electrical repair", "Solar installation", "Emergency callout"].map((service) => (
-                    <span key={service} className="rounded-full bg-brand-soft px-3 py-1.5 text-xs font-semibold text-brand">
-                      {service} · Preview
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <ProfileSectionCard title="Service coverage" IconComponent={MapPinned}>
-                <p className="text-sm font-semibold">Lahore</p>
-                <p className="mt-2 text-sm leading-6 text-ink/50">Model Town, Gulberg, Garden Town and nearby areas · Preview</p>
-              </ProfileSectionCard>
-              <ProfileSectionCard title="Availability" IconComponent={CalendarClock}>
-                <p className="text-sm font-semibold">Monday–Saturday</p>
-                <p className="mt-2 text-sm leading-6 text-ink/50">9:00 AM–7:00 PM · Emergency jobs by request · Preview</p>
-              </ProfileSectionCard>
+          <TabPanel tabKey="profile" activeTabKey={activeTabKey}>
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <ProviderAboutMeSection
+                emailAddress={profile.emailAddress || providerEmail}
+                profile={profile}
+                onSaveProfile={saveProviderProfilePatch}
+                memberSinceLabel={formatMemberSinceLabel(profile.createdAt)}
+                onCompletenessChange={makeCompletenessHandler("about")}
+              />
+              <aside className="space-y-5">
+                <ProviderApplicationProgressCard
+                  currentStageKey={profile.status}
+                  latestReviewDecision={profile.latestReviewDecision}
+                />
+                <SubmissionCard profile={profile} onReviewRequirements={() => setIsSubmissionDialogOpen(true)} />
+                <ProviderTipsCard />
+              </aside>
             </div>
+          </TabPanel>
 
-            <ProfileSectionCard
-              title="Work gallery"
-              description="Real job photographs will help customers judge workmanship before booking."
-              IconComponent={Images}
-            >
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {providerWorkImageList.map((image, index) => (
-                  <button
-                    key={image.source}
-                    type="button"
-                    onClick={() => toast.info("Gallery management will be built after design approval.")}
-                    className={`group relative overflow-hidden rounded-2xl bg-ink/5 ${index === 0 ? "col-span-2 aspect-[2/1] sm:col-span-1 sm:aspect-square" : "aspect-square"}`}
-                  >
-                    <Image src={image.source} alt={image.alternativeText} fill sizes="(max-width: 640px) 80vw, 240px" className="object-cover transition duration-300 group-hover:scale-105" />
-                    <span className="absolute right-2 bottom-2 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold text-white">Preview</span>
-                  </button>
-                ))}
-              </div>
-            </ProfileSectionCard>
+          <TabPanel tabKey="services" activeTabKey={activeTabKey}>
+            <ProviderServicesSection profile={profile} availableCategories={serviceCategories} onSaveProfile={saveProviderProfilePatch} onCompletenessChange={makeCompletenessHandler("services")} />
+          </TabPanel>
 
-            <ProfileSectionCard title="References" description="Past customers or supervisors an administrator can contact during review." IconComponent={MessageSquareText}>
-              <ul className="space-y-2">
-                {referenceList.map((reference) => (
-                  <li key={reference} className="flex items-center justify-between gap-3 rounded-2xl bg-ink/[.035] px-4 py-3">
-                    <span className="truncate text-sm text-ink/70">{reference}</span>
-                    {isEditing && (
-                      <button
-                        type="button"
-                        onClick={() => removeReference(reference)}
-                        aria-label={`Remove reference ${reference}`}
-                        className="grid size-7 shrink-0 place-items-center rounded-full text-ink/35 transition hover:bg-red-50 hover:text-red-600"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-                {referenceList.length === 0 && <li className="rounded-2xl border border-dashed border-ink/15 px-4 py-3 text-sm text-ink/40">No references added yet.</li>}
-              </ul>
+          <TabPanel tabKey="gallery" activeTabKey={activeTabKey}>
+            <ProviderGallerySection initialMediaAssets={profile.mediaAssets.filter((asset) => asset.mediaPurpose === "work_gallery")} onCompletenessChange={makeCompletenessHandler("gallery")} />
+          </TabPanel>
 
-              {isEditing && (
-                <div className="mt-3 flex gap-2">
-                  <Input
-                    value={pendingReference}
-                    onChange={(changeEvent) => setPendingReference(changeEvent.target.value)}
-                    placeholder="Name · Area · Phone number"
-                    onKeyDown={(keyboardEvent) => {
-                      if (keyboardEvent.key === "Enter") {
-                        keyboardEvent.preventDefault();
-                        addReference();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={addReference}
-                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-brand/20 bg-brand-soft px-4 text-sm font-semibold text-brand transition hover:bg-brand-soft/70"
-                  >
-                    <Plus className="size-4" />
-                    Add
-                  </button>
-                </div>
-              )}
-            </ProfileSectionCard>
+          <TabPanel tabKey="availability" activeTabKey={activeTabKey}>
+            <ProviderAvailabilitySection profile={profile} onSaveProfile={saveProviderProfilePatch} onCompletenessChange={makeCompletenessHandler("availability")} />
+          </TabPanel>
 
-            <ProfileSectionCard title="Experience & trust" description="These details will be reviewed before the listing becomes active." IconComponent={ShieldCheck}>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <TrustItem IconComponent={Wrench} label="Experience" value={`${savedValues.yearsOfExperience} years · Preview`} />
-                <TrustItem IconComponent={MessageSquareText} label="References" value={`${referenceList.length} added · Preview`} />
-                <TrustItem IconComponent={Star} label="Reviews" value="No reviews yet" />
-              </div>
-            </ProfileSectionCard>
-          </div>
-
-          <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
-            <ProviderApplicationProgressCard currentStageKey="draft" />
-            <ProfileCompletenessCard
-              checklist={[
-                { label: "Account details", isComplete: true },
-                { label: "CNIC and address", isComplete: false },
-                { label: "Services and areas", isComplete: false },
-                { label: "Professional biography", isComplete: false },
-                { label: "Work gallery", isComplete: false },
-                { label: "References", isComplete: referenceList.length > 0 },
-              ]}
-            />
-            <div className="rounded-3xl bg-ink p-6 text-white">
-              <p className="text-xs font-bold uppercase tracking-[.16em] text-brand">Profile visibility</p>
-              <h2 className="mt-3 text-lg">Complete your provider profile</h2>
-              <p className="mt-2 text-sm leading-6 text-white/60">
-                Your listing remains private until the required profile sections are complete and an administrator approves it.
-              </p>
-              <button
-                type="button"
-                onClick={() => toast.info("Profile editing will open from the Edit profile action.")}
-                className="mt-5 w-full rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-ink"
-              >
-                Review missing details
-              </button>
+          <TabPanel tabKey="verification" activeTabKey={activeTabKey}>
+            <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+              <ProviderDocumentsSection initialMediaAssets={profile.mediaAssets} onCompletenessChange={makeCompletenessHandler("documents")} />
+              <ProviderReferencesSection
+                profile={profile}
+                onSaveProfile={saveProviderProfilePatch}
+              />
             </div>
-          </aside>
+          </TabPanel>
         </div>
-      </form>
+      </div>
+
+      <ProviderProfileSubmissionDialog
+        open={isSubmissionDialogOpen}
+        onOpenChange={setIsSubmissionDialogOpen}
+        checklist={profileChecklist}
+        canSubmitForReview={canSubmitForReview}
+        isSubmitting={isSubmissionRequestPending || submitProfileMutation.isPending}
+        onSubmit={async () => {
+          try {
+            setIsSubmissionRequestPending(true);
+            // Media is persisted independently from the scalar profile form.
+            // Refresh here so submission always uses the latest profile version
+            // and server-calculated readiness instead of a stale query snapshot.
+            const refreshedProfileResult = await profileQuery.refetch();
+            const refreshedProfile = refreshedProfileResult.data;
+            if (!refreshedProfile) throw new Error("Your latest profile details could not be loaded. Please try again.");
+            if (!refreshedProfile.readiness.canSubmitForReview) {
+              throw new Error("Some required profile information has not been saved yet. Review the checklist and save each section before submitting.");
+            }
+            await submitProfileMutation.mutateAsync(refreshedProfile.version);
+            setIsSubmissionDialogOpen(false);
+            toast.success("Profile submitted for review.");
+          } catch (error) {
+            toast.error("Could not submit profile", {
+              description: error instanceof Error ? error.message : "Review the required fields and try again.",
+            });
+          } finally {
+            setIsSubmissionRequestPending(false);
+          }
+        }}
+      />
     </main>
   );
 }
 
-function BasicInformationItem({ IconComponent, label, value }: { IconComponent: LucideIcon; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl bg-ink/[.035] p-4">
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
-        <IconComponent className="size-4" />
-      </span>
-      <div className="min-w-0">
-        <dt className="text-[11px] font-semibold uppercase tracking-wide text-ink/40">{label}</dt>
-        <dd className="mt-1 truncate text-sm font-medium text-ink/75">{value}</dd>
-      </div>
-    </div>
-  );
-}
-
-function maskGovernmentIdentityNumber(identityNumber: string) {
-  const finalDigit = identityNumber.slice(-1);
-  return `•••••-•••••••-${finalDigit}`;
-}
-
-function EditableProviderField({
-  label,
-  error,
-  className = "",
+function TabPanel({
+  tabKey,
+  activeTabKey,
   children,
 }: {
-  label: string;
-  error?: string;
-  className?: string;
+  tabKey: ProviderProfileTabKey;
+  activeTabKey: ProviderProfileTabKey;
   children: React.ReactNode;
 }) {
+  const isActive = tabKey === activeTabKey;
+
   return (
-    <label className={`block ${className}`}>
-      <span className="mb-2 block text-xs font-semibold text-ink/60">{label}</span>
+    <div
+      id={`profile-tab-panel-${tabKey}`}
+      role="tabpanel"
+      aria-labelledby={`profile-tab-${tabKey}`}
+      hidden={!isActive}
+      className="scroll-mt-28"
+    >
       {children}
-      {error && <span className="mt-1.5 block text-xs text-red-600">{error}</span>}
-    </label>
+    </div>
   );
 }
 
-function TrustItem({ IconComponent, label, value }: { IconComponent: LucideIcon; label: string; value: string }) {
+function SubmissionCard({ profile, onReviewRequirements }: { profile: ProviderProfileData; onReviewRequirements: () => void }) {
+  const hasBeenSubmitted = ["submitted", "under_review"].includes(profile.status);
+  const isApproved = profile.status === "active";
   return (
-    <div className="rounded-2xl bg-ink/[.035] p-4">
-      <IconComponent className="size-4 text-brand" />
-      <p className="mt-3 text-xs text-ink/40">{label}</p>
-      <p className="mt-1 text-sm font-semibold">{value}</p>
-    </div>
+    <section className="bg-ink-soft rounded-2xl p-5 text-white">
+      <p className="text-flash text-xs font-bold tracking-[0.14em] uppercase">Profile visibility</p>
+      <h2 className="mt-3 text-lg font-semibold">
+        {isApproved
+          ? "Approved and visible"
+          : hasBeenSubmitted
+            ? "Submitted for review"
+            : profile.status === "changes_required"
+              ? "Changes requested"
+              : "Private while in draft"}
+      </h2>
+      <p className="mt-2 text-sm leading-6 text-white/60">
+        {isApproved
+          ? "Your provider profile is approved and can appear to customers in Explore."
+          : hasBeenSubmitted
+            ? "Your profile is with the KhidmatAI review team. You will see the decision here."
+            : profile.latestReviewDecision?.reason ??
+              "Submit after every required section is complete. An administrator must approve the profile before customers can see it."}
+      </p>
+      <Button
+        type="button"
+        disabled={hasBeenSubmitted || isApproved}
+        onClick={onReviewRequirements}
+        className="bg-flash text-ink mt-5 w-full rounded-lg text-sm font-bold hover:bg-white"
+      >
+        {isApproved ? "Profile is live" : hasBeenSubmitted ? "Review in progress" : "Review and submit"}
+      </Button>
+    </section>
   );
+}
+
+function ProviderProfileSubmissionDialog({
+  open,
+  onOpenChange,
+  checklist,
+  canSubmitForReview,
+  isSubmitting,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  checklist: Array<{ label: string; isComplete: boolean }>;
+  canSubmitForReview: boolean;
+  isSubmitting: boolean;
+  onSubmit: () => Promise<void>;
+}) {
+  const remainingCount = checklist.filter((item) => !item.isComplete).length;
+
+  return (
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!isSubmitting) onOpenChange(nextOpen); }}>
+      <DialogContent className="max-w-lg" showCloseButton={!isSubmitting}>
+        <DialogHeader>
+          <DialogTitle>{canSubmitForReview ? "Ready to submit your profile?" : "Review your profile requirements"}</DialogTitle>
+          <DialogDescription>
+            {canSubmitForReview
+              ? "Everything required is complete. After submission, an administrator will review your profile before it appears in Explore."
+              : `${remainingCount} required ${remainingCount === 1 ? "section still needs" : "sections still need"} attention before submission.`}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+          {checklist.map((item) => (
+            <li key={item.label} className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 text-sm font-medium ${item.isComplete ? "border-brand/15 bg-brand-soft/40 text-ink" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+              <span className={`grid size-5 shrink-0 place-items-center rounded-full ${item.isComplete ? "bg-brand text-white" : "bg-amber-200 text-amber-800"}`}>
+                {item.isComplete ? <BadgeCheck className="size-3.5" /> : <span className="text-xs font-bold">!</span>}
+              </span>
+              <span>{item.label}</span>
+              <span className="ml-auto text-xs font-normal">{item.isComplete ? "Complete" : "Required"}</span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="text-ink/50 mt-4 rounded-xl bg-ink/[.035] px-4 py-3 text-xs leading-5">
+          References are optional and can be added now or later. You can update the profile again if an administrator requests changes.
+        </p>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => onOpenChange(false)}>
+            Continue editing
+          </Button>
+          <Button type="button" disabled={!canSubmitForReview || isSubmitting} onClick={() => void onSubmit()} className="bg-brand hover:bg-brand-deep min-w-36 text-white">
+            {isSubmitting ? <><Spinner className="size-4" /> Submitting…</> : "Submit for review"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+function ProviderTipsCard() {
+  return (
+    <section className="border-ink/10 rounded-2xl border bg-white p-5">
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <Lightbulb className="text-brand size-4" /> Build a stronger profile
+      </p>
+      <ul className="mt-4 space-y-3">
+        {providerTipList.map((tip) => (
+          <li key={tip} className="text-ink/55 flex items-start gap-2.5 text-xs leading-5">
+            <BadgeCheck className="text-brand mt-0.5 size-3.5 shrink-0" /> {tip}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function getTabForSection(sectionKey: SectionKey | undefined): ProviderProfileTabKey {
+  if (sectionKey === "services") return "services";
+  if (sectionKey === "gallery") return "gallery";
+  if (sectionKey === "availability") return "availability";
+  if (sectionKey === "documents") return "verification";
+  return "profile";
+}
+
+function formatMemberSinceLabel(createdAt: string): string {
+  const createdDate = new Date(createdAt);
+  if (Number.isNaN(createdDate.getTime())) return "Recently";
+  return createdDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+function normalizeProviderTabKey(tabKey: string | undefined): ProviderProfileTabKey {
+  return providerProfileTabList.some((tab) => tab.key === tabKey) ? (tabKey as ProviderProfileTabKey) : "profile";
+}
+
+function changeTabAndUpdateUrl(
+  tabKey: ProviderProfileTabKey,
+  setActiveTabKey: (tabKey: ProviderProfileTabKey) => void,
+) {
+  setActiveTabKey(tabKey);
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set("tab", tabKey);
+  window.history.replaceState(window.history.state, "", `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+  window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
 }

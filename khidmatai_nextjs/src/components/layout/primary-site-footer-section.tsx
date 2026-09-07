@@ -36,19 +36,19 @@ const footerLinkColumnList: readonly FooterLinkColumnDefinition[] = [
 function FooterBrandColumn() {
   return (
     <div>
-      <Link href="/" className="flex items-center gap-2.5 text-lg font-semibold tracking-[-0.02em]">
-        <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-brand-deep text-sm font-bold text-white">
+      <Link href="/" className="flex items-center gap-2.5 text-lg font-bold tracking-[-0.035em] text-white">
+        <span className="text-brand-deep grid size-9 shrink-0 place-items-center rounded-xl bg-white text-sm font-bold">
           Kh
         </span>
         <span>
-          Khidmat<span className="text-brand">AI</span>
+          Khidmat<span className="text-accent-warm">AI</span>
         </span>
       </Link>
-      <p className="mt-4 max-w-xs text-sm leading-6 text-ink/60">
-        A location-aware marketplace that matches you with verified local service providers, and
-        keeps quotes, bookings, and reviews in one place.
+      <p className="mt-4 max-w-sm text-sm leading-6 text-white/60">
+        A location-aware marketplace that matches you with verified local service providers, and keeps quotes, bookings,
+        and reviews in one place.
       </p>
-      <div className="mt-5 space-y-2 text-sm text-ink/55">
+      <div className="mt-5 space-y-2 text-sm text-white/55">
         <p className="flex items-center gap-2">
           <HiOutlineMapPin className="size-4 shrink-0" /> Launching in one city, a few categories at a time
         </p>
@@ -60,11 +60,11 @@ function FooterBrandColumn() {
 function FooterLinkColumn({ columnTitle, columnLinks }: FooterLinkColumnDefinition) {
   return (
     <div>
-      <p className="text-sm font-semibold text-ink">{columnTitle}</p>
+      <p className="text-sm font-semibold text-white">{columnTitle}</p>
       <ul className="mt-4 space-y-3">
         {columnLinks.map(([label, href]) => (
           <li key={label}>
-            <Link href={href} className="text-sm text-ink/55 transition hover:text-brand">
+            <Link href={href} className="text-sm text-white/55 transition hover:text-white">
               {label}
             </Link>
           </li>
@@ -76,19 +76,19 @@ function FooterLinkColumn({ columnTitle, columnLinks }: FooterLinkColumnDefiniti
 
 export function PrimarySiteFooterSection() {
   return (
-    <footer className="border-t border-ink/8 bg-brand-soft/40">
-      <div className="mx-auto max-w-screen-2xl px-5 py-14 sm:px-8 lg:px-10">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+    <footer className="bg-ink-soft border-t border-white/10 text-white">
+      <div className="mx-auto max-w-screen-2xl px-5 py-16 sm:px-8">
+        <div className="grid gap-12 md:grid-cols-[1.5fr_repeat(3,0.8fr)]">
           <FooterBrandColumn />
           {footerLinkColumnList.map((column) => (
             <FooterLinkColumn key={column.columnTitle} {...column} />
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-5 border-t border-ink/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-ink/55">&copy; {new Date().getFullYear()} KhidmatAI. All rights reserved.</p>
+        <div className="mt-14 flex flex-col gap-5 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-white/50">&copy; {new Date().getFullYear()} KhidmatAI. All rights reserved.</p>
 
-          <p className="text-xs text-ink/40">Hackathon MVP</p>
+          <p className="text-xs text-white/35">Built locally for local work</p>
         </div>
       </div>
     </footer>

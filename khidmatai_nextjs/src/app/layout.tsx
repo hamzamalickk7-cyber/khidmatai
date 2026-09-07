@@ -23,12 +23,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${bodyTextFont.variable} ${headingDisplayFont.variable} h-full antialiased`}
-    >
-      <body className="flex min-h-full flex-col bg-white text-ink">
-        <NextTopLoader color="#4f46e5" height={3} showSpinner={false} shadow="0 0 12px rgba(79, 70, 229, 0.45)" />
+    <html lang="en" className={`${bodyTextFont.variable} ${headingDisplayFont.variable} h-full antialiased`}>
+      <body className="bg-background text-ink flex min-h-full flex-col">
+        <NextTopLoader color="#166534" height={3} showSpinner={false} shadow="0 0 12px rgba(22, 101, 52, 0.4)" />
         <ApplicationProviders>
           {children}
           <Toaster />

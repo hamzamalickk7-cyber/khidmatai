@@ -1,10 +1,18 @@
 import { z } from "zod";
+import {
+  pakistanMobileNumberInputPattern,
+  pakistanMobileNumberValidationMessage,
+} from "./pakistan-phone-number-validation";
 
 export const customerProfileFormValidationSchema = z
   .object({
     fullName: z.string().trim().min(2, "Enter at least 2 characters.").max(120),
-    phoneNumber: z.string().trim().min(7, "Enter a valid phone number.").max(30),
-    city: z.string().trim().min(2, "Enter your city.").max(100),
+    phoneNumber: z
+      .string()
+      .trim()
+      .regex(pakistanMobileNumberInputPattern, pakistanMobileNumberValidationMessage)
+      .nullable(),
+    city: z.string().trim().min(2, "Enter your city.").max(100).nullable(),
     preferredContactMethod: z.enum(["phone", "whatsapp", "email"]),
     servicePreferenceKeys: z.array(z.string().trim().min(2).max(80)).max(20),
     expectedVersion: z.number().int().positive(),

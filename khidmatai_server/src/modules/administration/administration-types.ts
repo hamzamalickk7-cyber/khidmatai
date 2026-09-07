@@ -9,5 +9,14 @@ export const providerReviewTransitionCatalog = {
 } as const;
 
 export type ProviderReviewAction = keyof typeof providerReviewTransitionCatalog;
-export interface ProviderReviewActionInput { providerProfileId: string; action: ProviderReviewAction; reason: string; expectedVersion: number; }
-export interface ProviderReviewActor { authenticationUserId: string; accountRole: "admin"; }
+export interface ProviderReviewActionInput {
+  providerProfileId: string;
+  action: ProviderReviewAction;
+  reason?: string;
+  requestedChangeKeys?: string[];
+  expectedVersion: number;
+}
+export interface ProviderReviewActor {
+  authenticationUserId: string;
+  accountRole: "admin";
+}

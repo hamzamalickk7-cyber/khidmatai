@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { providerReviewTransitionCatalog } from "./administration-types.js";
 
-const allProviderProfileStatuses = ["draft", "submitted", "under_review", "changes_required", "active", "paused", "rejected", "suspended", "removed"];
+const allProviderProfileStatuses = [
+  "draft",
+  "submitted",
+  "under_review",
+  "changes_required",
+  "active",
+  "paused",
+  "rejected",
+  "suspended",
+  "removed",
+];
 
 describe("providerReviewTransitionCatalog", () => {
   it("never lists the removed 'approved' status as a permitted previous status", () => {

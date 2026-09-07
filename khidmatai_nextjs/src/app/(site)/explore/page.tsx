@@ -1,8 +1,9 @@
-import { Search } from "lucide-react";
-import { SimpleComingSoonPageView } from "@/modules/shared/views/simple-coming-soon-page-view";
-import { requireCurrentAuthenticationSession } from "@/server/authentication/current-session";
+import { ExploreProviderDirectoryView } from "@/modules/explore/views/explore-provider-directory-view";
+import { getPublicProviderDirectory, getPublicServiceCategories } from "@/modules/explore/services/public-provider-directory-api-service";
+
+export const dynamic = "force-dynamic";
 
 export default async function ExploreProvidersPage() {
-  await requireCurrentAuthenticationSession("/explore");
-  return <SimpleComingSoonPageView title="Explore is coming soon" description="Soon you will be able to find trusted local service providers near you." IconComponent={Search} />;
+  const [providers, categories] = await Promise.all([getPublicProviderDirectory(), getPublicServiceCategories()]);
+  return <ExploreProviderDirectoryView providers={providers} categories={categories} />;
 }

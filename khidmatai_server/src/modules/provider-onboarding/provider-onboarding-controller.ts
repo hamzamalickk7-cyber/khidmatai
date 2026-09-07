@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { sendSuccessfulApiResponse } from "../../shared/api-response.js";
 import { getAuthenticatedProviderOnboarding, saveAuthenticatedProviderOnboardingDraft, submitAuthenticatedProviderOnboarding } from "./provider-onboarding-service.js";
-import { providerOnboardingSubmissionValidationSchema, providerOnboardingUpdateValidationSchema } from "./provider-onboarding-validation-schemas.js";
+import { providerOnboardingPatchValidationSchema, providerOnboardingSubmissionValidationSchema, providerOnboardingUpdateValidationSchema } from "./provider-onboarding-validation-schemas.js";
 
 function getAuthenticatedProviderUserId(request: Request) {
   return request.authenticatedSession!.user.id;
@@ -13,7 +13,7 @@ export async function getProviderOnboardingController(request: Request, response
 }
 
 export async function updateProviderOnboardingController(request: Request, response: Response) {
-  const validatedProviderOnboardingUpdate = providerOnboardingUpdateValidationSchema.parse(request.body);
+  const validatedProviderOnboardingUpdate = request.method === "PATCH" ? providerOnboardingPatchValidationSchema.parse(request.body) : providerOnboardingUpdateValidationSchema.parse(request.body);
   const updatedProviderOnboarding = await saveAuthenticatedProviderOnboardingDraft(getAuthenticatedProviderUserId(request), validatedProviderOnboardingUpdate);
   return sendSuccessfulApiResponse(response, updatedProviderOnboarding);
 }

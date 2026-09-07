@@ -1,93 +1,70 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
-import { Eye, Handshake, Lock, Scale, ShieldCheck, type LucideIcon } from "lucide-react";
+import { BadgeCheck, ClipboardCheck, Eye, Star, type LucideIcon } from "lucide-react";
 import { SectionEyebrowLabel } from "@/modules/landing/components/section-eyebrow-label";
 
-interface SafetyCommitmentDefinition {
-  IconComponent: LucideIcon;
+interface TrustItem {
   title: string;
   description: string;
+  IconComponent: LucideIcon;
 }
 
-const safetyCommitmentList: SafetyCommitmentDefinition[] = [
+const trustItemList: TrustItem[] = [
   {
-    IconComponent: Lock,
-    title: "Delayed address sharing",
-    description: "Your exact address is shared only when it's operationally necessary.",
+    title: "Identity review",
+    description: "Provider profiles show what has been checked instead of using vague trust claims.",
+    IconComponent: BadgeCheck,
   },
   {
+    title: "Admin-reviewed profiles",
+    description: "Provider details can be reviewed before a profile is approved for the marketplace.",
+    IconComponent: ClipboardCheck,
+  },
+  {
+    title: "Real job reviews",
+    description: "Feedback is connected to completed bookings, making ratings more meaningful.",
+    IconComponent: Star,
+  },
+  {
+    title: "Clear information",
+    description: "Experience, services, area and availability stay visible before a customer chooses.",
     IconComponent: Eye,
-    title: "Reports, blocks & appeals",
-    description: "Every account can report a problem and expect a documented response.",
-  },
-  {
-    IconComponent: ShieldCheck,
-    title: "Category-specific warnings",
-    description: "Hazardous work like gas or electrical carries extra guidance and rules.",
-  },
-  {
-    IconComponent: Handshake,
-    title: "Human support for disputes",
-    description: "A documented decision process, not an automated black box.",
-  },
-  {
-    IconComponent: Scale,
-    title: "No inflated guarantees",
-    description: "We state exactly what verification covers, and never more than that.",
   },
 ];
 
 export function TrustAndSafetyCommitmentSection() {
   return (
-    <section id="trust-and-safety" className="scroll-mt-24 border-y border-ink/8 bg-brand-soft/40 py-20 sm:py-28">
-      <div className="mx-auto max-w-screen-2xl px-5 sm:px-8 lg:px-10">
-        <div className="grid gap-14 lg:grid-cols-[.85fr_1.15fr]">
-          <motion.div
-            initial={{ opacity: 0, x: -16 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="lg:sticky lg:top-28 lg:self-start"
-          >
-            <SectionEyebrowLabel>Made for peace of mind</SectionEyebrowLabel>
-            <h2 className="mt-3 text-4xl sm:text-5xl">
-              &ldquo;Verified&rdquo; means something specific here.
-            </h2>
-            <p className="mt-5 text-lg leading-7 text-ink/60">
-              We say exactly what was checked and when. Verification lowers risk; it is never
-              marketed as a guarantee.
+    <section id="trust-and-safety" className="scroll-mt-24 bg-white py-20 sm:py-24">
+      <div className="mx-auto max-w-screen-2xl px-5 sm:px-8">
+        <div className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:items-start">
+          <div className="max-w-lg">
+            <SectionEyebrowLabel>Trust without the fine print</SectionEyebrowLabel>
+            <h2 className="mt-3 text-3xl leading-tight sm:text-4xl">Know what you are choosing.</h2>
+            <p className="text-ink/60 mt-4 leading-7">
+              KhidmatAI reduces uncertainty by keeping the provider details customers actually need in view.
             </p>
-            <div className="relative mt-8 aspect-[4/3] overflow-hidden rounded-3xl">
-              <Image
-                src="https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1000&q=85"
-                alt="A finished, high-quality home renovation"
-                fill
-                sizes="(max-width:1024px) 90vw,40vw"
-                className="object-cover"
-              />
+            <div className="bg-brand-soft text-brand mt-7 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold">
+              <BadgeCheck className="size-4" /> Verification reduces risk—it is not a guarantee
             </div>
-          </motion.div>
+          </div>
 
-          <div className="space-y-6">
-            {safetyCommitmentList.map((commitment, commitmentIndex) => (
-              <motion.div
-                key={commitment.title}
-                initial={{ opacity: 0, y: 20 }}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {trustItemList.map(({ title, description, IconComponent }, index) => (
+              <motion.article
+                key={title}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.5, delay: commitmentIndex * 0.07 }}
-                className="flex items-start gap-5 rounded-2xl bg-white/70 p-5"
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.06 }}
+                className="border-border bg-background rounded-xl border p-5"
               >
-                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white text-brand shadow-sm">
-                  <commitment.IconComponent className="size-5" />
+                <span className="bg-ink-soft text-flash grid size-10 place-items-center rounded-lg">
+                  <IconComponent className="size-4.5" aria-hidden="true" />
                 </span>
-                <div>
-                  <h3 className="font-semibold text-ink">{commitment.title}</h3>
-                  <p className="mt-1.5 text-sm leading-6 text-ink/60">{commitment.description}</p>
-                </div>
-              </motion.div>
+                <h3 className="mt-5 text-lg font-semibold">{title}</h3>
+                <p className="text-ink/55 mt-2 text-sm leading-6">{description}</p>
+              </motion.article>
             ))}
           </div>
         </div>

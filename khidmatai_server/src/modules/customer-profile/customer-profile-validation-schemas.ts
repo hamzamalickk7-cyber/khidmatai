@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { pakistanMobileNumberValidationSchema } from "../../shared/pakistan-phone-number.js";
 
 export const customerProfileUpdateValidationSchema = z
   .object({
     fullName: z.string().trim().min(2).max(120),
-    phoneNumber: z.string().trim().min(7).max(30).nullable(),
+    phoneNumber: pakistanMobileNumberValidationSchema.nullable(),
     city: z.string().trim().min(2).max(100).nullable(),
     preferredContactMethod: z.enum(["phone", "whatsapp", "email"]),
     servicePreferenceKeys: z

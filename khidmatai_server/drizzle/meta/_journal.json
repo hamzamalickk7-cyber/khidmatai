@@ -36,6 +36,83 @@
       "when": 1787737200000,
       "tag": "0004_add_role_specific_profile_persistence",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787741400000,
+      "tag": "0005_add_reversible_account_deactivation",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787742000000,
+      "tag": "0006_expand_account_type_for_staff_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787742600000,
+      "tag": "0007_separate_deactivation_from_ban_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788508800000,
+      "tag": "0008_add_extensible_marketplace_catalogues",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788508860000,
+      "tag": "0009_map_legacy_service_category_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788508920000,
+      "tag": "0010_complete_customer_and_provider_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788508980000,
+      "tag": "0011_synchronize_authentication_profile_images",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1788509040000,
+      "tag": "0012_add_scalability_indexes_and_rate_limit_store",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788768300000,
+      "tag": "0013_remove_obsolete_postgres_rate_limit_store",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788775200000,
+      "tag": "0014_enforce_pakistan_mobile_number_format",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1788782400000,
+      "tag": "0015_default_new_providers_to_available",
+      "breakpoints": true
     }
   ]
 }

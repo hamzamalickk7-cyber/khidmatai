@@ -19,7 +19,20 @@ export function createBackendApiUrl(apiPath: string) {
 
 async function requestKhidmatAiBackendApiEnvelope<ResponseData>(apiPath: string, requestConfiguration: RequestInit = {}): Promise<SuccessfulApiResponse<ResponseData>> {
   const apiResponse = await fetch(createBackendApiUrl(apiPath), { ...requestConfiguration, credentials: "include", cache: "no-store" });
-  const responseBody = await apiResponse.json() as SuccessfulApiResponse<ResponseData> | FailedApiResponse;
+  const responseText = await apiResponse.text();
+  let responseBody: SuccessfulApiResponse<ResponseData> | FailedApiResponse;
+  try {
+    responseBody = JSON.parse(responseText) as SuccessfulApiResponse<ResponseData> | FailedApiResponse;
+  } catch {
+    throw new KhidmatAiBackendApiError(
+      apiResponse.status,
+      "BACKEND_RESPONSE_INVALID",
+      apiResponse.ok
+        ? "The server returned an invalid response."
+        : `The backend request failed with status ${apiResponse.status}. Check the backend terminal for the original error.`,
+      process.env.NODE_ENV === "development" ? responseText.slice(0, 500) : undefined,
+    );
+  }
   if (!apiResponse.ok || !responseBody.success) {
     const failedResponse = responseBody as FailedApiResponse;
     throw new KhidmatAiBackendApiError(apiResponse.status, failedResponse.error?.code ?? "API_REQUEST_FAILED", failedResponse.error?.message ?? "The request could not be completed.", failedResponse.error?.details);

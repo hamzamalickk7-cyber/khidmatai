@@ -11,7 +11,12 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   outputFileTracingRoot: path.resolve(process.cwd(), ".."),
   turbopack: { root: path.resolve(process.cwd(), "..") },
-  images: { remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }] },
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+    ],
+  },
   async rewrites() {
     return [
       {

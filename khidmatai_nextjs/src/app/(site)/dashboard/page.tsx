@@ -5,7 +5,13 @@ import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const authenticationSession = await requireCurrentAuthenticationSession("/dashboard");
-  if (authenticationSession.user.role === "provider") return <ProviderDashboardView providerName={authenticationSession.user.name}/>;
-  if (authenticationSession.user.role === "admin" || authenticationSession.user.role === "support") redirect("/administration");
-  return <CustomerDashboardView customerName={authenticationSession.user.name}/>;
+  if (authenticationSession.user.role === "provider")
+    return (
+      <ProviderDashboardView
+        authenticationUserId={authenticationSession.user.id}
+        providerName={authenticationSession.user.name}
+      />
+    );
+  if (authenticationSession.user.role === "admin" || authenticationSession.user.role === "support") redirect("/admin");
+  return <CustomerDashboardView customerName={authenticationSession.user.name} />;
 }

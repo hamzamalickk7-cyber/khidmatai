@@ -5,14 +5,14 @@ import {
   updateAuthenticatedCustomerProfile,
 } from "../services/customer-profile-api-service";
 
-export const customerProfileQueryKey = ["authenticated-customer-profile"] as const;
-export function useCustomerProfileQuery() {
-  return useQuery({ queryKey: customerProfileQueryKey, queryFn: getAuthenticatedCustomerProfile });
+export const createCustomerProfileQueryKey = (authenticationUserId: string) => ["authenticated-customer-profile", authenticationUserId] as const;
+export function useCustomerProfileQuery(authenticationUserId: string) {
+  return useQuery({ queryKey: createCustomerProfileQueryKey(authenticationUserId), queryFn: getAuthenticatedCustomerProfile });
 }
-export function useUpdateCustomerProfileMutation() {
+export function useUpdateCustomerProfileMutation(authenticationUserId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateAuthenticatedCustomerProfile,
-    onSuccess: (profile) => queryClient.setQueryData(customerProfileQueryKey, profile),
+    onSuccess: (profile) => queryClient.setQueryData(createCustomerProfileQueryKey(authenticationUserId), profile),
   });
 }

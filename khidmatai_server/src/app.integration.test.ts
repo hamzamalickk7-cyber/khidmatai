@@ -20,9 +20,25 @@ describe("KhidmatAI Express API integration", () => {
     expect(response.headers["x-powered-by"]).toBeUndefined();
   });
 
+  it("keeps liveness outside the general API rate limiter", async () => {
+    const { createKhidmatAiExpressApplication } = await import("./app.js");
+    const response = await supertest(createKhidmatAiExpressApplication()).get("/api/v1/health");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ success: true, data: { status: "healthy" } });
+    expect(response.headers.ratelimit).toBeUndefined();
+  });
+
   it("rejects unauthenticated access to private customer profiles", async () => {
     const { createKhidmatAiExpressApplication } = await import("./app.js");
     const response = await supertest(createKhidmatAiExpressApplication()).get("/api/v1/customer-profile");
+    expect(response.status).toBe(401);
+    expect(response.body.error.code).toBe("AUTHENTICATION_REQUIRED");
+  });
+
+  it("rejects unauthenticated access to administration metrics", async () => {
+    const { createKhidmatAiExpressApplication } = await import("./app.js");
+    const response = await supertest(createKhidmatAiExpressApplication()).get("/api/v1/administration/overview");
     expect(response.status).toBe(401);
     expect(response.body.error.code).toBe("AUTHENTICATION_REQUIRED");
   });

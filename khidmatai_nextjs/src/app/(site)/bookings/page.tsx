@@ -1,5 +1,8 @@
 import { CalendarDays } from "lucide-react";
 import { SimpleComingSoonPageView } from "@/modules/shared/views/simple-coming-soon-page-view";
-import { requireCurrentAuthenticationSession } from "@/server/authentication/current-session";
+import { requireAuthenticatedAccountRole } from "@/server/authentication/current-session";
 
-export default async function BookingsPage() { await requireCurrentAuthenticationSession("/bookings"); return <SimpleComingSoonPageView title="Bookings are coming soon" description="You will be able to manage all your bookings here." IconComponent={CalendarDays} />; }
+export default async function BookingsPage() {
+  await requireAuthenticatedAccountRole(["customer", "provider"], "/bookings");
+  return <SimpleComingSoonPageView title="Bookings are coming soon" description="Customers and providers will be able to manage their role-specific bookings here." IconComponent={CalendarDays} />;
+}

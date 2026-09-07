@@ -20,5 +20,7 @@ export const providerReviewActionCatalog: readonly ProviderReviewActionDefinitio
 ];
 
 export function getAvailableProviderReviewActions(currentStatus: string): ProviderReviewActionDefinition[] {
-  return providerReviewActionCatalog.filter((actionDefinition) => actionDefinition.permittedPreviousStatuses.includes(currentStatus));
+  return providerReviewActionCatalog.filter((actionDefinition) =>
+    actionDefinition.permittedPreviousStatuses.includes(currentStatus),
+  );
 }

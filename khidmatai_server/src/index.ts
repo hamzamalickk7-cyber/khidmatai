@@ -4,10 +4,6 @@ import { applicationLogger } from "./config/logger-configuration.js";
 import { postgresqlConnectionPool } from "./database/database-connection.js";
 import { runPendingDatabaseMigrations } from "./database/run-database-migrations.js";
 
-// A synchronous exception or unhandled promise rejection that escapes every
-// try/catch and the Express error-handling chain leaves the process in an
-// unknown state. Log it with full context, then exit so the process manager
-// restarts a clean instance, instead of silently continuing to serve traffic.
 process.on("uncaughtException", (uncaughtError) => {
   applicationLogger.fatal({ err: uncaughtError }, "Uncaught exception. Exiting.");
   process.exit(1);
@@ -21,7 +17,6 @@ process.on("unhandledRejection", (unhandledRejectionReason) => {
 async function startKhidmatAiBackendServer() {
   try {
     await runPendingDatabaseMigrations();
-
     const khidmatAiExpressApplication = createKhidmatAiExpressApplication();
     const httpServer = khidmatAiExpressApplication.listen(
       backendEnvironmentConfiguration.PORT,
@@ -44,10 +39,7 @@ async function startKhidmatAiBackendServer() {
     process.on("SIGINT", () => void shutDownKhidmatAiBackend("SIGINT"));
     process.on("SIGTERM", () => void shutDownKhidmatAiBackend("SIGTERM"));
   } catch (startupError) {
-    applicationLogger.fatal(
-      { error: startupError },
-      "KhidmatAI backend startup failed while applying database migrations.",
-    );
+    applicationLogger.fatal({ err: startupError }, "KhidmatAI backend startup failed.");
     await postgresqlConnectionPool.end();
     process.exitCode = 1;
   }

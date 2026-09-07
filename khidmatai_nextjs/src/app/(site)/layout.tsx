@@ -1,12 +1,5 @@
-import { PrimarySiteFooterSection } from "@/components/layout/primary-site-footer-section";
-import { PrimarySiteNavigationHeader } from "@/components/layout/primary-site-navigation-header";
+import { SiteRouteChrome } from "@/components/layout/site-route-chrome";
 
 export default function SiteRouteGroupLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <>
-      <PrimarySiteNavigationHeader />
-      {children}
-      <PrimarySiteFooterSection />
-    </>
-  );
+  return <SiteRouteChrome>{children}</SiteRouteChrome>;
 }

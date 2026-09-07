@@ -4,14 +4,14 @@ import { buttonVariants } from "@/components/ui/button";
 
 export function CustomerDashboardView({ customerName }: { customerName: string }) {
   return (
-    <main className="flex-1 bg-[#fafafa] px-5 py-12 sm:px-8">
-      <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Customer dashboard</p>
+    <main className="bg-background flex-1 px-5 py-12 sm:px-8">
+      <div className="mx-auto max-w-screen-2xl">
+        <p className="text-brand text-xs font-bold tracking-[.18em] uppercase">Customer dashboard</p>
 
         <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-4xl">Welcome, {customerName}</h1>
-            <p className="mt-3 text-ink/55">Find reliable local help and keep your bookings organized.</p>
+            <p className="text-ink/55 mt-3">Find reliable local help and keep your bookings organized.</p>
           </div>
           <Link href="/explore" className={buttonVariants({ className: "h-11 gap-2 rounded-full px-5" })}>
             <Search className="size-4" />
@@ -49,13 +49,13 @@ function DashboardActionCard({ href, title, description, IconComponent }: Dashbo
   return (
     <Link
       href={href}
-      className="group rounded-2xl border border-ink/10 bg-white p-6 transition hover:-translate-y-0.5 hover:border-brand/25 hover:shadow-lg"
+      className="group border-ink/10 hover:border-brand/25 rounded-2xl border bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-lg"
     >
-      <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand">
+      <span className="bg-brand-soft text-brand grid size-10 place-items-center rounded-xl">
         <IconComponent className="size-4" />
       </span>
       <h2 className="mt-5 text-xl">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-ink/55">{description}</p>
+      <p className="text-ink/55 mt-2 text-sm leading-6">{description}</p>
     </Link>
   );
 }

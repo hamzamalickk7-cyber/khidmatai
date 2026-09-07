@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider as ReduxProvider } from "react-redux";
-import { applicationReduxStore } from "./application-redux-store";
+import { ScrollToPageTopOnRouteChange } from "@/components/layout/scroll-to-page-top-on-route-change";
 
 export function ApplicationProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -16,8 +15,9 @@ export function ApplicationProviders({ children }: { children: React.ReactNode }
       }),
   );
   return (
-    <ReduxProvider store={applicationReduxStore}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </ReduxProvider>
+    <QueryClientProvider client={queryClient}>
+      <ScrollToPageTopOnRouteChange />
+      {children}
+    </QueryClientProvider>
   );
 }
